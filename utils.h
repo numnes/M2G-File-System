@@ -109,4 +109,22 @@ unsigned int empty_inode(FILE *device){
     return index_inode_free;
 }
 
+std::string get_name_dir(char *dir_path){
+    std::string destiny_path = dir_path;
+    if(destiny_path == "")
+        return 0;
+
+    std::string delimiter = "/";
+
+    size_t pos = 0;
+    std::string token;
+    
+    while ((pos = destiny_path.find(delimiter)) != std::string::npos) {
+        token = destiny_path.substr(0, pos);
+        directories_path.push_back(token);
+        destiny_path.erase(0, pos + delimiter.length());
+    }
+    return destiny_path;
+}
+
 #endif

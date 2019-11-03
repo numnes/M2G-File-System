@@ -4,17 +4,15 @@
 #include <time.h>
 #include <bits/stdc++.h>
 
-typedef struct {
-    bool a;
-    bool b;
-}mask;
-
-int test(int a, int b = 2){
-    return a + b;
-}
-
 int main() {
+    char st[10] = {'a','a','a','a','a','a','a','a','a','a'};    
+    
+    std::string ss;
 
-    std::cout << " div:  " << test(10) << std::endl;
+    ss = st;
+    
+    std::cout << ss << std::endl;
+
+    st = ss;
 
 }

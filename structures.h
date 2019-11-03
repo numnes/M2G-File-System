@@ -25,8 +25,8 @@ typedef struct inode{
 } __attribute__((packed)) inode;
 
 typedef struct directory_entry{
-    unsigned int inode_idex;
+    unsigned int index_inode;
     unsigned char _type;
-    unsigned char name[27];
+    char name[27];
 }  __attribute__((packed)) directory_entry;
 #endif

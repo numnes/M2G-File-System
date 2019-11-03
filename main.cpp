@@ -3,7 +3,7 @@
 #include <bits/stdc++.h>
 #include "structures.h"
 #include "utils.h"
-#include "format_functions.h"
+#include "format_controller.h"
 #include "reader.h"
 
 int main(int argc, const char **argv){

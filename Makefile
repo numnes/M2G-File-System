@@ -1,7 +1,7 @@
 all: clear m2g
 
-m2g: main.cpp structures.h utils.h format_functions.h
-	g++ main.cpp structures.h utils.h format_functions.h -o m2g 
+m2g: main.cpp structures.h utils.h format_controller.h
+	g++ main.cpp structures.h utils.h format_controller.h -o m2g 
 
 clear:
 	rm -rf *.o *~ m2g

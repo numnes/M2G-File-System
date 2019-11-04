@@ -31,11 +31,13 @@ int main(int argc, const char **argv){
         const char *file_source_name = argv[2];
         const char *device_name = argv[3];
         const char *path_into_device = argv[4];
-        bool root = argc < 4;
+        bool root = argc < 5;
         if(import_file(file_source_name, device_name, path_into_device, root)){
             std::cout << "Sucesso!" << std::endl;
             return 0;
         }
+        std::cout << "ERRO!" << std::endl;
+        return 1;
     }
     else if(!strcmp(directive,"--view") || !strcmp(directive,"-v") ){
         const char *device_name = argv[2];
@@ -50,9 +52,12 @@ int main(int argc, const char **argv){
         const char *device_name = argv[2];
         const char *path_into_device = argv[3];
 
-        mk_dir(device_name, path_into_device);
-
-        return 0;
+        if(mk_dir(device_name, path_into_device)){
+            std::cout << "Sucesso!" << std::endl;
+            return 0;
+        }
+        std::cout << "ERRO!" << std::endl;
+        return 1;
     }
     else if(!strcmp(directive,"--export") || !strcmp(directive,"-e")){
         const char *caminho_pasta_destino = argv[2];
@@ -62,6 +67,12 @@ int main(int argc, const char **argv){
             std::cout << "Sucesso!" << std::endl;
             return 0;
         }
+        std::cout << "ERRO!" << std::endl;
+        return 1;
+    }
+    else{
+        print_help();
+        return 0;
     }
     return 0;
 }

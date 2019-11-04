@@ -18,7 +18,7 @@ bool import_file(const char *file_source_name, const char *device_name, const ch
     device = fopen(device_name,"rb+");
 
     unsigned int inode_destiny = 0;
-    if(root){
+    if(!root){
         inode_destiny = find_inode_from_path(device, path_into_device);
     }
 
@@ -33,10 +33,7 @@ bool import_file(const char *file_source_name, const char *device_name, const ch
     char name_vchar[size_vchar];
     for(int i = 0; i < size_vchar; i++)
         name_vchar[i] = name_source[i];
-    name_vchar[size_vchar] = '\0';
-
-    std::cout << "tamanho nome : " << size_vchar << std::endl;
-    
+    name_vchar[size_vchar] = '\0';    
     
     directory_entry dir_entry_at = create_dir_entry(device, 1, name_vchar);
     
@@ -45,9 +42,7 @@ bool import_file(const char *file_source_name, const char *device_name, const ch
         return false;
     }
 
-    std::cout << "lalala" << std::endl;
     unsigned long data_length = get_size(file_source);
-    std::cout << "data_length prev " << data_length << std::endl;
 
     if(write_data_in_inode_from_file(device, file_source, dir_entry_at.index_inode, &data_length) == UINT_MAX){
         std::cout << "ERRO!\n\nNão foi possivel gravar o arquivo!" << std::endl;
@@ -149,9 +144,7 @@ bool mk_dir(const char *device_name, const char *path_into_device){
     strcpy(dir_prev.name, "..");
     dir_prev._type = 2;
 
-    std::cout << "/* message */ "<< dir_entry_at.index_inode << std::endl;
     write_directory_entry_in_inode(device, dir_prev, dir_entry_at.index_inode);
-    std::cout << "====================" << std::endl;
     if(!write_directory_entry_in_inode(device, dir_entry_at, inode_destiny)){
         std::cout << "ERRO!\n\nNão foi possivel criar a pasta!" << std::endl;
         return false;

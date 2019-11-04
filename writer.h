@@ -11,9 +11,15 @@ unsigned int inode_alloc(FILE *device){
 
     unsigned int block_size = (1024 << sb.pot_block_size);
     unsigned int local_time = std::time(nullptr);
-    unsigned int null_ptr = (num_blocks(device) + 1) * block_size;
+    unsigned int null_ptr_dir = sb.num_blocks + 1;
+    unsigned int null_ptr_indir = sb.num_inodes+ 1;
+    unsigned int _indir = sb.num_inodes + 1;
     unsigned int free_position = empty_inode(device);
-    unsigned int ad_new_inode = sb.ad_inode_tab + (free_position * 64);
+    unsigned int ad_new_inode = (sb.ad_inode_tab * block_size) + (free_position * 62);
+    sb.num_free_inodes = sb.num_free_inodes - 1;
+
+    fseek(device, 0, SEEK_SET);
+    fwrite(&sb, sizeof(superblock), 1, device);
 
     inode new_inode;
     new_inode.type[0] = 1 ;
@@ -24,11 +30,13 @@ unsigned int inode_alloc(FILE *device){
     new_inode.modified_time = local_time;
     new_inode.always_zero = 0;
     for(int i = 0; i < 8; i++)
-        new_inode.direct_pointers[i] = null_ptr;
-    new_inode.inderect_pointer = null_ptr;
+        new_inode.direct_pointers[i] = null_ptr_dir;
+    new_inode.inderect_pointer = null_ptr_indir;
     
     fseek(device, ad_new_inode, SEEK_SET);
     fwrite(&new_inode, sizeof(inode), 1, device);
+
+    dec_free_inodes(device);
 
     return free_position;
 }
@@ -38,7 +46,8 @@ bool inode_update(FILE *device, unsigned int inode_index, inode updated_inode){
     sb = read_superblock(device);
 
     unsigned int local_time = std::time(nullptr);
-    unsigned int ad_updated_inode = sb.ad_inode_tab + (inode_index * 64);
+    unsigned int block_size = (1024 << sb.pot_block_size);
+    unsigned int ad_updated_inode = (sb.ad_inode_tab * block_size) + (inode_index * 62);
 
     updated_inode.last_access_time = local_time;
     updated_inode.modified_time = local_time;
@@ -48,88 +57,37 @@ bool inode_update(FILE *device, unsigned int inode_index, inode updated_inode){
     return fwrite(&updated_inode, sizeof(inode), 1, device);
 }
 
-bool write_data_in_inode(FILE *device, unsigned int inode_index, unsigned char *data, unsigned long data_length){
+bool init_root_dir(FILE *device, unsigned int inode_index){
     superblock sb;
     sb = read_superblock(device);
 
     unsigned int block_size = (1024 << sb.pot_block_size);
-    unsigned int ad_inode = sb.ad_inode_tab + (inode_index * 64);
-    unsigned int null_ptr = (num_blocks(device) + 1) * block_size;
+    unsigned int ad_inode = (sb.ad_inode_tab * block_size) + (inode_index * 62);
     inode updated_inode;
+    
+    unsigned int new_block = get_empty_block(device);
+    set_block_used(device, new_block);
+    updated_inode.direct_pointers[0] = new_block;
 
-    fseek(device, ad_inode, SEEK_SET);
-    fread(&updated_inode, sizeof(inode), 1, device);
-
-    for(unsigned long i = 0; i < data_length;){
-        if(are_free_blocks(device)){
-            unsigned int block = get_empty_block(device);
-            unsigned long ad_block = block * block_size;
-            bool direct = false;
-
-            set_block_used(device, block);
-            fseek(device, ad_block, SEEK_SET);
-            
-            i += block_size;
-            /////Gravação dos dados
-            for(unsigned long j = 0; j < block_size && j < data_length; j++){
-
-                //melhorar essa parte, aqui é esperado todos os dados em uma string de char, e os dados são gravados byte a byte
-                //tem que otimizar, fiz assim só pra possibilitar a formatação, o resto da função ta de boas.
-
-                //já fiz isso ^, criando as duas funções aqui abaixo, vou manter essa função aqui só por exemplo por estar comentada pq 
-                //a parte de alocação de blocos apontados no bloco do ponteiro indireto nunca é usada aqui, ela só é chamada na 
-                //formatação quando o diretorio raiz é criado.
-                fwrite(&data[j], sizeof(unsigned char), 1, device);
-            }
-            /////Gravação dos dados
-
-
-            for(unsigned int j = 0; j < 8; j++){
-                if(updated_inode.direct_pointers[j] == null_ptr){
-                    updated_inode.direct_pointers[j] = block * block_size;
-                    direct = true;
-                }
-            }
-            if(!direct){ // todos os ponteiros diretos foram usados
-            std::cout << "ta aqui mas não era pra tá" << std::endl;
-                if(updated_inode.inderect_pointer == null_ptr){
-                    unsigned int new_block_indirect = get_empty_block(device);
-                    unsigned long ad_block_indirect = block * block_size;
-
-                    set_block_used(device, new_block_indirect);
-                    fseek(device, ad_block_indirect, SEEK_SET);
-                    fwrite(&new_block_indirect, sizeof(unsigned int), 1, device);
-                }
-                else{
-                    unsigned int num_indirect_pointers = ceil(updated_inode.size / block_size);
-                    unsigned long adress_new_indirect_pointer = (updated_inode.inderect_pointer * block_size) + (num_indirect_pointers * 4);
-                    
-                    fseek(device, adress_new_indirect_pointer, SEEK_SET);
-                    fwrite(&block, sizeof(unsigned int), 1, device);
-                }
-            }
-            updated_inode.size += data_length;
-        }else{
-            return false;
-        }
-    }
-    return inode_update(device, inode_index, updated_inode);
+    inode_update(device, 0, updated_inode);
 }
 
-bool write_data_in_inode_from_file(FILE *device, FILE *data, unsigned int inode_index){
+unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned int inode_index, unsigned long *data_length){
     superblock sb;
     sb = read_superblock(device);
 
     unsigned int block_size = (1024 << sb.pot_block_size);
-    unsigned int ad_inode = sb.ad_inode_tab + (inode_index * 64);
-    unsigned int null_ptr = (num_blocks(device) + 1) * block_size;
-    unsigned long data_length = get_size(data);
+    unsigned int ad_inode = (sb.ad_inode_tab * block_size) + (inode_index * 62);
+    unsigned int null_ptr_dir = sb.num_blocks + 1;
+    unsigned int null_ptr_indir = sb.num_inodes + 1;
     inode updated_inode;
 
     fseek(device, ad_inode, SEEK_SET);
     fread(&updated_inode, sizeof(inode), 1, device);
 
-    while(data_length > 0){
+
+    while(*data_length > 0){
+        
         if(are_free_blocks(device)){
             unsigned int block = get_empty_block(device);
             unsigned long ad_block = block * block_size;
@@ -139,51 +97,70 @@ bool write_data_in_inode_from_file(FILE *device, FILE *data, unsigned int inode_
             fseek(device, ad_block, SEEK_SET);
                         
             /////Gravação dos dados
-            if(data_length >= block_size){
-                unsigned char buffer[block_size];              
+            if(*data_length >= block_size){
+                unsigned char buffer[block_size];
                 fread(&buffer, block_size, 1, data);
                 fwrite(&buffer, block_size, 1, device);
-                data_length -= block_size;
+                *data_length -= block_size;
                 updated_inode.size += block_size;
             }
             else{
-                unsigned char buffer[data_length];              
-                fread(&buffer, data_length, 1, data);
-                fwrite(&buffer, data_length, 1, device);
-                data_length = 0;
-                updated_inode.size += data_length;
+                unsigned char buffer[*data_length]; 
+                fread(&buffer, *data_length, 1, data);
+                fwrite(&buffer, *data_length, 1, device);
+                *data_length = 0;
+                updated_inode.size += *data_length;
             }
             /////Gravação dos dados
 
             for(unsigned int j = 0; j < 8; j++){
-                if(updated_inode.direct_pointers[j] == null_ptr){
-                    updated_inode.direct_pointers[j] = block * block_size;
+                if(updated_inode.direct_pointers[j] == null_ptr_dir){
+                    updated_inode.direct_pointers[j] = block;
                     direct = true;
+                    break;
                 }
             }
             if(!direct){ // todos os ponteiros diretos foram usados
-                if(updated_inode.inderect_pointer == null_ptr){
-                    unsigned int new_block_indirect = get_empty_block(device);
-                    unsigned long ad_block_indirect = block * block_size;
-
-                    set_block_used(device, new_block_indirect);
-                    fseek(device, ad_block_indirect, SEEK_SET);
-                    fwrite(&new_block_indirect, sizeof(unsigned int), 1, device);
-                }
-                else{
-                    unsigned int num_indirect_pointers = ceil(updated_inode.size / block_size);
-                    unsigned long adress_new_indirect_pointer = (updated_inode.inderect_pointer * block_size) + (num_indirect_pointers * 4);
-                    
-                    fseek(device, adress_new_indirect_pointer, SEEK_SET);
-                    fwrite(&block, sizeof(unsigned int), 1, device);
-                }
+                if(updated_inode.inderect_pointer == null_ptr_indir) // o ponteiro para o inode indireto não estava definido
+                    updated_inode.inderect_pointer = inode_alloc(device);  
+                updated_inode.size = write_data_in_inode_from_file(device, data, updated_inode.inderect_pointer, data_length);
             }
         }else{
-            return false;
+            return UINT_MAX;
         }
     }
-    
-    return inode_update(device, inode_index, updated_inode);;
+    inode_update(device, inode_index, updated_inode);
+    return updated_inode.size;
+}
+
+bool write_in_file_from_inode(FILE *device, FILE *data, unsigned int inode_index){
+    superblock sb;
+    sb = read_superblock(device);
+
+    unsigned int block_size = (1024 << sb.pot_block_size);
+    unsigned int ad_inode = (sb.ad_inode_tab * block_size) + (inode_index * 62);
+    unsigned int null_ptr_dir = sb.num_blocks + 1;
+    unsigned int null_ptr_indir = sb.num_inodes + 1;
+    inode updated_inode;
+
+    fseek(device, ad_inode, SEEK_SET);
+    fread(&updated_inode, sizeof(inode), 1, device);
+
+    for(unsigned int j = 0; j < 8; j++){
+        if(updated_inode.direct_pointers[j] != null_ptr_dir){
+            fseek(device, (updated_inode.direct_pointers[j] * block_size), SEEK_SET);
+            unsigned char buffer[block_size];
+            fread(&buffer, block_size, 1, device);
+            fwrite(&buffer, block_size, 1, data);
+        }
+        else{
+            return true;
+        }
+    }
+    if(updated_inode.inderect_pointer != null_ptr_indir){
+        write_in_file_from_inode(device, data, updated_inode.inderect_pointer);
+    }
+    return true;
 }
 
 bool write_directory_entry_in_inode(FILE *device, directory_entry de, unsigned int inode_index){
@@ -191,83 +168,89 @@ bool write_directory_entry_in_inode(FILE *device, directory_entry de, unsigned i
     sb = read_superblock(device);
 
     unsigned int block_size = (1024 << sb.pot_block_size);
-    unsigned int ad_inode = sb.ad_inode_tab + (inode_index * 64);
-    unsigned int null_ptr = (num_blocks(device) + 1) * block_size;
+    unsigned int ad_inode = (sb.ad_inode_tab * block_size) + (inode_index * 62);
+    unsigned int null_ptr_dir = sb.num_blocks + 1;
+    unsigned int null_ptr_indir = sb.num_inodes + 1;
     inode updated_inode;
+    
+    char free_dir_name[27];
+    memset(free_dir_name, 0, 27);
 
     fseek(device, ad_inode, SEEK_SET);
     fread(&updated_inode, sizeof(inode), 1, device);
-
-    unsigned int index_pointer = (updated_inode.size / block_size);
-    unsigned int index_byte = updated_inode.size % block_size;
+    
     bool end_dir_pointers = false;
 
-    if(index_pointer < 8){
-        if((index_byte + sizeof(directory_entry)) < (updated_inode.direct_pointers[index_pointer] + block_size)){
-            
-            fseek(device, ad_inode, SEEK_SET);
-        }
-    }
-    
-
-
-
-
-
-    while(data_length > 0){
-        if(are_free_blocks(device)){
-            unsigned int block = get_empty_block(device);
-            unsigned long ad_block = block * block_size;
-            bool direct = false;
-
-            set_block_used(device, block);
-            fseek(device, ad_block, SEEK_SET);
-                        
-            /////Gravação dos dados
-            if(data_length >= block_size){
-                unsigned char buffer[block_size];              
-                fread(&buffer, block_size, 1, data);
-                fwrite(&buffer, block_size, 1, device);
-                data_length -= block_size;
-                updated_inode.size += block_size;
-            }
-            else{
-                unsigned char buffer[data_length];              
-                fread(&buffer, data_length, 1, data);
-                fwrite(&buffer, data_length, 1, device);
-                data_length = 0;
-                updated_inode.size += data_length;
-            }
-            /////Gravação dos dados
-
-            for(unsigned int j = 0; j < 8; j++){
-                if(updated_inode.direct_pointers[j] == null_ptr){
-                    updated_inode.direct_pointers[j] = block * block_size;
-                    direct = true;
-                }
-            }
-            if(!direct){ // todos os ponteiros diretos foram usados
-                if(updated_inode.inderect_pointer == null_ptr){
-                    unsigned int new_block_indirect = get_empty_block(device);
-                    unsigned long ad_block_indirect = block * block_size;
-
-                    set_block_used(device, new_block_indirect);
-                    fseek(device, ad_block_indirect, SEEK_SET);
-                    fwrite(&new_block_indirect, sizeof(unsigned int), 1, device);
-                }
-                else{
-                    unsigned int num_indirect_pointers = ceil(updated_inode.size / block_size);
-                    unsigned long adress_new_indirect_pointer = (updated_inode.inderect_pointer * block_size) + (num_indirect_pointers * 4);
-                    
-                    fseek(device, adress_new_indirect_pointer, SEEK_SET);
-                    fwrite(&block, sizeof(unsigned int), 1, device);
+    for(int i = 0; i < 8; i++){
+        if(updated_inode.direct_pointers[i] != null_ptr_dir){
+            unsigned long pointer = (updated_inode.direct_pointers[i]) * block_size;
+            fseek(device, pointer, SEEK_SET);
+            for( int j = 0; j < block_size; j += sizeof(directory_entry) ){
+                directory_entry temp_de;
+                fread(&temp_de, sizeof(directory_entry), 1, device);
+                if(temp_de._type == 3 || (temp_de._type == 0 && (!strcmp(temp_de.name, free_dir_name)))){
+                    fseek(device, -1 * (sizeof(directory_entry)), SEEK_CUR);
+                    fwrite(&de, sizeof(directory_entry), 1, device);
+                    return true;
                 }
             }
         }else{
-            return false;
+            unsigned int block = get_empty_block(device);
+            unsigned long ad_block = block * block_size;
+            set_block_used(device, block);
+
+            std::cout << "entrou" << ad_block << std::endl;
+            updated_inode.direct_pointers[i] = block;
+            inode_update(device, inode_index, updated_inode);
+            fseek(device, ad_block, SEEK_SET);
+            fwrite(&de, sizeof(directory_entry), 1, device);
+            return true;
         }
     }
-    return inode_update(device, inode_index, updated_inode);;
+
+    if(updated_inode.inderect_pointer != null_ptr_indir){
+        return write_directory_entry_in_inode(device, de, updated_inode.inderect_pointer);
+    }
+    
+    unsigned int index_inode = inode_alloc(device);
+    updated_inode.inderect_pointer = index_inode;
+    inode_update(device, inode_index, updated_inode);
+    return write_directory_entry_in_inode(device, de, updated_inode.inderect_pointer);
+    
+}
+
+bool remove_dir_entry(FILE *device, char *path){
+    superblock sb;
+    sb = read_superblock(device);
+
+    std::string destiny_path = path;
+    if(destiny_path == "")
+        return 0;
+
+    std::vector<std::string> directories_path;
+    std::string delimiter = "/";
+
+    size_t pos = 0;
+    std::string token;
+    
+    while ((pos = destiny_path.find(delimiter)) != std::string::npos) {
+        token = destiny_path.substr(0, pos);
+        directories_path.push_back(token);
+        destiny_path.erase(0, pos + delimiter.length());
+    }
+    directories_path.push_back(destiny_path);
+
+    std::string at_dir = directories_path[0];
+    unsigned int inode_index = find_dir_entry(device, at_dir, 0);
+
+    for(int i = 1; i < directories_path.size(); i++){
+        std::cout << "entra aqui " << directories_path.size() << std::endl;
+        at_dir = directories_path[i];
+        inode_index = find_dir_entry(device, at_dir, inode_index);
+        if(inode_index == UINT_MAX)
+            break;
+    }
+    return inode_index;
 }
 
 directory_entry create_dir_entry(FILE *device, unsigned char type, const char *name){

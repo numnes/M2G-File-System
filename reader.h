@@ -20,12 +20,12 @@ inode get_inode_by_index(FILE *device, unsigned int index){
     superblock sb;
     sb = read_superblock(device);
 
-    unsigned int inode_address = sb.ad_inode_tab + (index_inode * 64);
+    unsigned int block_size = (1024 << sb.pot_block_size);
+    unsigned int inode_address = (sb.ad_inode_tab * block_size) + (index * 62);
 
     fseek(device, inode_address, SEEK_SET);
 
     inode inode_at;
-
     fread(&inode_at, sizeof(inode), 1, device);
 
     return inode_at;
@@ -40,41 +40,83 @@ std::vector<std::pair<unsigned int, std::string> > get_dir_entries_from_inode(FI
     unsigned int block_size = (1024 << sb.pot_block_size);
     inode inode_at = get_inode_by_index(device, index_inode);
     unsigned int npointers = ceil(inode_at.size / block_size);
+    unsigned int null_ptr_dir = sb.num_blocks + 1;
+    unsigned int null_ptr_indir = sb.num_inodes + 1;
 
-    int n_dir_pointers = 8;
-    if(npointers < 8)
-        n_dir_pointers = npointers;
+    char free_dir_name[27];
+    memset(free_dir_name, 0, 27);
 
-    for(int  i = 0; i < n_dir_pointers; i++){
-        unsigned int ad_block = inode_at.direct_pointers[i];
-        fseek(device, ad_block, SEEK_SET);
-        for(int j = 0; j < block_size; j += 32){
-            directory_entry de;
-            fread(&de, sizeof(directory_entry), 1, device);
-
-            if(de._type == 0 && de.index_inode == 0)
-                break;
-
-            std::string name = de.name;
-            dir_entries.push_back({de.index_inode, name});
+    for(int i = 0; i < 8; i++){
+        if(inode_at.direct_pointers[i] != null_ptr_dir){
+            unsigned long pointer = (inode_at.direct_pointers[i]) * block_size;
+            fseek(device, pointer, SEEK_SET);
+            for( int j = 0; j < block_size; j += sizeof(directory_entry) ){
+                directory_entry temp_de;
+                fread(&temp_de, sizeof(directory_entry), 1, device);
+                if(temp_de._type == 1 || temp_de._type == 2 || temp_de._type == 3){
+                    std::string name = temp_de.name;
+                    unsigned int index_inode = temp_de.index_inode;
+                    dir_entries.push_back({index_inode, name});
+                }
+            }
+        }else{
+            return dir_entries;
         }
-        npointers--;
     }
-    if(npointers){
-        fseek(device, inode_at.inderect_pointer , SEEK_SET);
-        for(int  i = 0; i < npointers; i++){
-            directory_entry de;
-            fread(&de, sizeof(directory_entry), 1, device);
-
-            if(de._type == 0 && de.index_inode == 0)
-                break;
-
-            std::string name = de.name;
-            dir_entries.push_back({de.index_inode, name});
+    return dir_entries;
+    if(inode_at.inderect_pointer != null_ptr_indir){
+        std::vector<std::pair<unsigned int, std::string> > indirect_entries;
+        indirect_entries = get_dir_entries_from_inode(device, inode_at.inderect_pointer);
+        
+        for(int i = 0; i < indirect_entries.size(); i++){
+            dir_entries.push_back(indirect_entries[i]);
         }
     }
     return dir_entries;
 }
+
+std::vector<directory_entry> get_dir_entries_from_inode_object(FILE *device, unsigned int index_inode){
+    superblock sb;
+    sb = read_superblock(device);
+    
+    std::vector<directory_entry> dir_entries;
+
+    unsigned int block_size = (1024 << sb.pot_block_size);
+    inode inode_at = get_inode_by_index(device, index_inode);
+    unsigned int npointers = ceil(inode_at.size / block_size);
+    unsigned int null_ptr_dir = sb.num_blocks + 1;
+    unsigned int null_ptr_indir = sb.num_inodes + 1;
+
+    char free_dir_name[27];
+    memset(free_dir_name, 0, 27);
+
+    for(int i = 0; i < 8; i++){
+        if(inode_at.direct_pointers[i] != null_ptr_dir){
+            unsigned long pointer = (inode_at.direct_pointers[i]) * block_size;
+            fseek(device, pointer, SEEK_SET);
+            for( int j = 0; j < block_size; j += sizeof(directory_entry) ){
+                directory_entry temp_de;
+                fread(&temp_de, sizeof(directory_entry), 1, device);
+                if(temp_de._type == 1 || temp_de._type == 2 || temp_de._type == 3){
+                    dir_entries.push_back(temp_de);
+                }
+            }
+        }else{
+            return dir_entries;
+        }
+    }
+    return dir_entries;
+    if(inode_at.inderect_pointer != null_ptr_indir){
+        std::vector<directory_entry> indirect_entries;
+        indirect_entries = get_dir_entries_from_inode_object(device, inode_at.inderect_pointer);
+        
+        for(int i = 0; i < indirect_entries.size(); i++){
+            dir_entries.push_back(indirect_entries[i]);
+        }
+    }
+    return dir_entries;
+}
+
 
 unsigned int find_dir_entry(FILE *device, std::string name, unsigned int index_inode){
     std::vector<std::pair<unsigned int, std::string> > entries = get_dir_entries_from_inode(device, index_inode);
@@ -87,7 +129,7 @@ unsigned int find_dir_entry(FILE *device, std::string name, unsigned int index_i
     return UINT_MAX;
 }
 
-unsigned int find_inode_from_path(FILE *device, char *path){
+unsigned int find_inode_from_path(FILE *device, const char *path){
     superblock sb;
     sb = read_superblock(device);
 
@@ -111,7 +153,10 @@ unsigned int find_inode_from_path(FILE *device, char *path){
     std::string at_dir = directories_path[0];
     unsigned int inode_index = find_dir_entry(device, at_dir, 0);
 
+    
+
     for(int i = 1; i < directories_path.size(); i++){
+        std::cout << "entra aqui " << directories_path.size() << std::endl;
         at_dir = directories_path[i];
         inode_index = find_dir_entry(device, at_dir, inode_index);
         if(inode_index == UINT_MAX)

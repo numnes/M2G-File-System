@@ -45,10 +45,32 @@ unsigned int num_inodes(FILE *device){
     return sb.num_inodes;
 }
 
+void dec_free_blocks(FILE *device){
+    superblock sb;
+    sb = read_superblock(device);
+
+    sb.num_free_blocks = sb.num_free_blocks -1;
+
+    fseek(device, 0, SEEK_SET);
+    fwrite(&sb, sizeof(superblock), 1, device);
+}
+
+void dec_free_inodes(FILE *device){
+    superblock sb;
+    sb = read_superblock(device);
+
+    sb.num_free_inodes = sb.num_free_inodes -1;
+
+    fseek(device, 0, SEEK_SET);
+    fwrite(&sb, sizeof(superblock), 1, device);
+}
+
+
 unsigned int get_empty_block(FILE *device){
     superblock sb;
     sb = read_superblock(device);
-    unsigned int ad_block_bitmp = sb.ad_block_bitmp;
+    unsigned int block_size = (1024 << sb.pot_block_size);
+    unsigned int ad_block_bitmp = sb.ad_block_bitmp * block_size;
     unsigned int num_blocks = sb.num_blocks;
     unsigned int index_free_block = 49;
 
@@ -69,12 +91,11 @@ unsigned int get_empty_block(FILE *device){
 bool set_block_used(FILE *device, unsigned int block){
     superblock sb;
     sb = read_superblock(device);
-    unsigned int ad_block_bitmp = sb.ad_block_bitmp;
+    unsigned int block_size = (1024 << sb.pot_block_size);
+    unsigned long ad_block_bitmp = sb.ad_block_bitmp * block_size;
     unsigned int num_blocks = sb.num_blocks;
 
     unsigned char bitmap[num_blocks];
-
-    std::cout << "passou aqui :"<< block << std::endl;
 
     fseek(device, ad_block_bitmp, SEEK_SET);
     fread(bitmap, sizeof(unsigned char) * num_blocks, 1, device);
@@ -83,6 +104,8 @@ bool set_block_used(FILE *device, unsigned int block){
 
     fseek(device, ad_block_bitmp, SEEK_SET);
     fwrite(bitmap, sizeof(unsigned char) * num_blocks, 1, device);
+
+    dec_free_blocks(device);
     
     return true;
 }
@@ -90,8 +113,9 @@ bool set_block_used(FILE *device, unsigned int block){
 unsigned int empty_inode(FILE *device){
     superblock sb;
     sb = read_superblock(device);
+    unsigned int block_size = (1024 << sb.pot_block_size);
     unsigned int num_inodes = sb.num_inodes;
-    unsigned int ad_inode_tab = sb.ad_inode_tab;
+    unsigned long ad_inode_tab = sb.ad_inode_tab * block_size;
     unsigned int index_inode_free = 49;
     inode inode_table[num_inodes];
 
@@ -109,7 +133,7 @@ unsigned int empty_inode(FILE *device){
     return index_inode_free;
 }
 
-std::string get_name_dir(char *dir_path){
+std::string get_name_dir(const char *dir_path){
     std::string destiny_path = dir_path;
     if(destiny_path == "")
         return 0;
@@ -121,10 +145,28 @@ std::string get_name_dir(char *dir_path){
     
     while ((pos = destiny_path.find(delimiter)) != std::string::npos) {
         token = destiny_path.substr(0, pos);
-        directories_path.push_back(token);
         destiny_path.erase(0, pos + delimiter.length());
     }
     return destiny_path;
 }
+
+void remove_final_dir(char *path){
+    int size= strlen(path);
+    int index_last_separator = 0;
+    for(int i = 0; i < size; i++){
+        if(path[i] == '/')
+            index_last_separator = i;
+    }
+    if(index_last_separator == 0)
+        return;
+    char temp_str[index_last_separator];
+    for(int i = 0; i < index_last_separator; i++){
+        temp_str[i] = path[i];
+    }
+    memset(path, 0, size);
+    strcpy(path, temp_str);
+    path[index_last_separator] = '\0';
+}
+
 
 #endif

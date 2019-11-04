@@ -18,7 +18,6 @@ void clear_reserved_blocks(FILE *device, unsigned int end_reserved){
 }
 
 bool write_superblock(unsigned int pot_block_size, unsigned long device_size, FILE *device){
-
     superblock sb;
     unsigned int n_inodes;
     unsigned int n_blocks;
@@ -33,14 +32,16 @@ bool write_superblock(unsigned int pot_block_size, unsigned long device_size, FI
 
     n_blocks = device_size / block_size;
     n_inodes = n_blocks / POINTERS_PER_INODE;
-    ad_block_bitmp = block_size;
+    ad_block_bitmp = 1;
 
     double db_n_blocks = n_blocks;
-    unsigned int n_blocks_bitmap = ceil((db_n_blocks / ( 8 * block_size )));
+    db_n_blocks /= 8;
+    unsigned int n_blocks_bitmap = ceil(db_n_blocks / block_size);
     num_blocks_block_bitmp = (unsigned char)n_blocks_bitmap;
 
-    ad_inode_table = ad_block_bitmp + ( num_blocks_block_bitmp * block_size );
-    ad_data_block = ad_inode_table + ( n_inodes * 62 );
+    ad_inode_table = ad_block_bitmp + n_blocks_bitmap;
+    double n_inodes_d = (n_inodes * 62) / block_size;
+    ad_data_block = ad_inode_table + ceil(n_inodes_d);
     num_free_blocks = n_blocks - ( num_blocks_block_bitmp + 2 );
 
     sb.num_inodes = n_inodes;
@@ -53,18 +54,25 @@ bool write_superblock(unsigned int pot_block_size, unsigned long device_size, FI
     sb.ad_inode_tab = ad_inode_table;
     sb.ad_data_block = ad_data_block;
     
-    clear_reserved_blocks(device, ad_data_block);
+    clear_reserved_blocks(device, ad_data_block * block_size);
+    
     fseek(device, 0, SEEK_SET);
-
     if(fwrite(&sb, sizeof(superblock), 1, device) != 1)
         return false;
+
+    for(unsigned int i = 0; i < ad_data_block; i++){
+        set_block_used(device, i);
+    }
+ 
     return true;
 }
 
 bool write_root_inode(FILE *device){
     unsigned int index_inode_root = inode_alloc(device);
+
     unsigned char data[1] = {0};
-    return write_data_in_inode(device, index_inode_root, data, 1);
+    init_root_dir(device, index_inode_root);
+    return true;
 }
 
 bool hard_format(const char *device_name, unsigned int pot)
@@ -84,6 +92,7 @@ bool hard_format(const char *device_name, unsigned int pot)
     flag_success = write_superblock(pot, device_size, device);
     flag_success = flag_success && write_root_inode(device);
 
+    fclose(device);
     return flag_success;
 }
 
@@ -99,6 +108,7 @@ bool soft_format(const char *device_name, unsigned int pot)
     flag_success = write_superblock(pot, device_size, device);
     flag_success = flag_success && write_root_inode(device);
 
+    fclose(device);
     return flag_success;
 }
 

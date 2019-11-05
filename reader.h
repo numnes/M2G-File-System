@@ -153,10 +153,7 @@ unsigned int find_inode_from_path(FILE *device, const char *path){
     std::string at_dir = directories_path[0];
     unsigned int inode_index = find_dir_entry(device, at_dir, 0);
 
-    
-
     for(int i = 1; i < directories_path.size(); i++){
-        std::cout << "entra aqui " << directories_path.size() << std::endl;
         at_dir = directories_path[i];
         inode_index = find_dir_entry(device, at_dir, inode_index);
         if(inode_index == UINT_MAX)

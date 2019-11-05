@@ -13,6 +13,7 @@
 bool import_file(const char *file_source_name, const char *device_name, const char* path_into_device, bool root){
     FILE *file_source;
     FILE *device;
+    bool ret = true;
 
     file_source = fopen(file_source_name,"rb+");
     device = fopen(device_name,"rb+");
@@ -34,24 +35,40 @@ bool import_file(const char *file_source_name, const char *device_name, const ch
     for(int i = 0; i < size_vchar; i++)
         name_vchar[i] = name_source[i];
     name_vchar[size_vchar] = '\0';    
-    
-    directory_entry dir_entry_at = create_dir_entry(device, 1, name_vchar);
-    
-    if(!write_directory_entry_in_inode(device, dir_entry_at, inode_destiny)){
-        std::cout << "ERRO!\n\nNão foi possivel criar o arquivo!" << std::endl;
-        return false;
+
+    int path_new_file_size = strlen(name_vchar) + strlen(path_into_device) + 1;
+    char str_path_new_file[path_new_file_size];
+    strcpy(str_path_new_file, path_into_device);
+    if(inode_destiny != 0){
+        strcat(str_path_new_file, "/");
+        strcat(str_path_new_file, name_vchar);
     }
 
-    unsigned long data_length = get_size(file_source);
+    if(find_inode_from_path(device, str_path_new_file) != UINT_MAX){
+        std::cout << "\tJá existe um arquivo/diretorio com este mesmo nome na pasta de destino." << std::endl;
+        ret = false;
+    }
+    else{
+        directory_entry dir_entry_at = create_dir_entry(device, 1, name_vchar);
+        
+        if(!write_directory_entry_in_inode(device, dir_entry_at, inode_destiny)){
+            std::cout << "ERRO!\n\nNão foi possivel criar o arquivo!" << std::endl;
+            return false;
+        }
 
-    if(write_data_in_inode_from_file(device, file_source, dir_entry_at.index_inode, &data_length) == UINT_MAX){
-        std::cout << "ERRO!\n\nNão foi possivel gravar o arquivo!" << std::endl;
-        //remover o dir entry
-        return false;
+        unsigned long data_length = get_size(file_source);
+
+        if(write_data_in_inode_from_file(device, file_source, dir_entry_at.index_inode, &data_length)){
+            std::cout << "ERRO!\n\nNão foi possivel gravar o arquivo!" << std::endl;
+            //remover o dir entry
+            return false;
+        }
+        inode in = get_inode_by_index(device, dir_entry_at.index_inode);
+        std::cout << in.size << " bytes gravados." << std::endl;
     }
     fclose(device);
     fclose(file_source);
-    return true;
+    return ret;
 }
 
 bool export_file(const char *folder_destiny_name, const char *device_name, const char* path_into_device){
@@ -100,7 +117,11 @@ bool export_file(const char *folder_destiny_name, const char *device_name, const
 
     new_file = fopen(cat_name, "rb+");
 
-    write_in_file_from_inode(device, new_file, inode_destiny);
+    inode in = get_inode_by_index(device, inode_destiny);
+
+    unsigned long data_length = in.size;
+
+    write_in_file_from_inode(device, new_file, inode_destiny, &data_length);
 
     fclose(device);
     fclose(new_file);
@@ -109,6 +130,7 @@ bool export_file(const char *folder_destiny_name, const char *device_name, const
 
 bool mk_dir(const char *device_name, const char *path_into_device){
     FILE *device;
+    bool ret = true;
     device = fopen(device_name, "rb+");
     std::string nameDir = get_name_dir(path_into_device);
     int size_str_path = strlen(path_into_device);
@@ -137,20 +159,34 @@ bool mk_dir(const char *device_name, const char *path_into_device){
         name_vchar[i] = name_source[i];
     name_vchar[size_vchar] = '\0';
 
-    directory_entry dir_entry_at = create_dir_entry(device, 2, name_vchar);
+    int path_new_file_size = strlen(name_vchar) + strlen(path_into_device) + 1;
+    char str_path_new_file[path_new_file_size];
+    strcpy(str_path_new_file, path_into_device);
+    if(inode_destiny != 0){
+        strcat(str_path_new_file, "/");
+        strcat(str_path_new_file, name_vchar);
+    }
 
-    directory_entry dir_prev;
-    dir_prev.index_inode = inode_destiny;
-    strcpy(dir_prev.name, "..");
-    dir_prev._type = 2;
+    if(find_inode_from_path(device, str_path_new_file) != UINT_MAX){
+        std::cout << "\tJá existe um diretorio/arquivo com este mesmo nome na pasta de destino." << std::endl;
+        ret = false;
+    }
+    else{
+        directory_entry dir_entry_at = create_dir_entry(device, 2, name_vchar);
 
-    write_directory_entry_in_inode(device, dir_prev, dir_entry_at.index_inode);
-    if(!write_directory_entry_in_inode(device, dir_entry_at, inode_destiny)){
-        std::cout << "ERRO!\n\nNão foi possivel criar a pasta!" << std::endl;
-        return false;
+        directory_entry dir_prev;
+        dir_prev.index_inode = inode_destiny;
+        strcpy(dir_prev.name, "..");
+        dir_prev._type = 2;
+
+        write_directory_entry_in_inode(device, dir_prev, dir_entry_at.index_inode);
+        if(!write_directory_entry_in_inode(device, dir_entry_at, inode_destiny)){
+            std::cout << "ERRO!\n\nNão foi possivel criar a pasta!" << std::endl;
+            return false;
+        }
     }
     fclose(device);
-    return true;
+    return ret;
 }
 
 bool rm_file(const char *device_name, const char *path_into_device){

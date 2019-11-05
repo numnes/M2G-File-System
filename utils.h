@@ -168,5 +168,4 @@ void remove_final_dir(char *path){
     path[index_last_separator] = '\0';
 }
 
-
 #endif

@@ -123,17 +123,18 @@ unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned i
             if(!direct){ // todos os ponteiros diretos foram usados
                 if(updated_inode.inderect_pointer == null_ptr_indir) // o ponteiro para o inode indireto não estava definido
                     updated_inode.inderect_pointer = inode_alloc(device);  
-                updated_inode.size = write_data_in_inode_from_file(device, data, updated_inode.inderect_pointer, data_length);
+                updated_inode.size += write_data_in_inode_from_file(device, data, updated_inode.inderect_pointer, data_length);
             }
         }else{
-            return UINT_MAX;
+            inode_update(device, inode_index, updated_inode);
+            return updated_inode.size;
         }
     }
     inode_update(device, inode_index, updated_inode);
     return updated_inode.size;
 }
 
-bool write_in_file_from_inode(FILE *device, FILE *data, unsigned int inode_index){
+bool write_in_file_from_inode(FILE *device, FILE *data, unsigned int inode_index, unsigned long *data_length){
     superblock sb;
     sb = read_superblock(device);
 
@@ -148,17 +149,27 @@ bool write_in_file_from_inode(FILE *device, FILE *data, unsigned int inode_index
 
     for(unsigned int j = 0; j < 8; j++){
         if(updated_inode.direct_pointers[j] != null_ptr_dir){
-            fseek(device, (updated_inode.direct_pointers[j] * block_size), SEEK_SET);
-            unsigned char buffer[block_size];
-            fread(&buffer, block_size, 1, device);
-            fwrite(&buffer, block_size, 1, data);
+            if(*data_length > block_size){
+                fseek(device, (updated_inode.direct_pointers[j] * block_size), SEEK_SET);
+                unsigned char buffer[block_size];
+                fread(&buffer, block_size, 1, device);
+                fwrite(&buffer, block_size, 1, data);
+                *data_length -= block_size;
+            }
+            else{
+                fseek(device, (updated_inode.direct_pointers[j] * block_size), SEEK_SET);
+                unsigned char buffer[*data_length];
+                fread(&buffer, *data_length, 1, device);
+                fwrite(&buffer, *data_length, 1, data);
+                *data_length = 0;
+            }
         }
         else{
             return true;
         }
     }
     if(updated_inode.inderect_pointer != null_ptr_indir){
-        write_in_file_from_inode(device, data, updated_inode.inderect_pointer);
+        write_in_file_from_inode(device, data, updated_inode.inderect_pointer, data_length);
     }
     return true;
 }
@@ -199,7 +210,6 @@ bool write_directory_entry_in_inode(FILE *device, directory_entry de, unsigned i
             unsigned long ad_block = block * block_size;
             set_block_used(device, block);
 
-            std::cout << "entrou" << ad_block << std::endl;
             updated_inode.direct_pointers[i] = block;
             inode_update(device, inode_index, updated_inode);
             fseek(device, ad_block, SEEK_SET);
@@ -244,7 +254,6 @@ bool remove_dir_entry(FILE *device, char *path){
     unsigned int inode_index = find_dir_entry(device, at_dir, 0);
 
     for(int i = 1; i < directories_path.size(); i++){
-        std::cout << "entra aqui " << directories_path.size() << std::endl;
         at_dir = directories_path[i];
         inode_index = find_dir_entry(device, at_dir, inode_index);
         if(inode_index == UINT_MAX)

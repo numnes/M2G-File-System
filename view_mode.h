@@ -4,20 +4,40 @@
 #include <bits/stdc++.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <cstring>
 
 #include "structures.h"
 #include "utils.h"
 #include "writer.h"
 #include "reader.h"
 
+void print_date_from_epoch(time_t time){
+    struct tm  ts;
+    char buf[80];
+    ts = *localtime(&time);
+    strftime(buf, sizeof(buf), "%d/%m/%Y %H:%M:%S", &ts);
+    printf("%s", buf);
+}
+
 std::vector<directory_entry> print_folder_content(FILE *device, unsigned int inode_index, std::string folder_name = "root"){
     std::string tipes[4] = {"FREE", "file", "directory", "unknow_type"};
     std::vector<directory_entry> entries = get_dir_entries_from_inode_object(device, inode_index);
 
-    std::cout << "\t=======" << folder_name << "=======" << std::endl;
-
+    std::cout << std::endl << "Criado Em\t\tModificado Em\t\tTipo\t\tNome" << std::endl;
     for(int i = 0; i < entries.size(); i++){
-        std::cout << "\t" << entries[i].name << "\t" << tipes[entries[i]._type] << std::endl;
+        inode inode_at = get_inode_by_index(device, entries[i].index_inode);
+         
+        print_date_from_epoch(inode_at.creation_time);
+        std::cout << "\t";
+        print_date_from_epoch(inode_at.modified_time);
+
+        char tp_v[tipes[entries[i]._type].size()];
+        for(int j = 0; j < tipes[entries[i]._type].size(); j++)
+            tp_v[j] = tipes[entries[i]._type][j];
+        tp_v[tipes[entries[i]._type].size()] = '\0';
+        printf("\t%13s", tp_v);
+        std::cout << "\t" << entries[i].name << std::endl;
     }
     return entries;
 }
@@ -62,7 +82,11 @@ void view_mode(const char *device_name){
     entries = print_folder_content(device, 0, str_device_name);
     std::string command;
 
+    std::string current_folder = str_device_name;
+    int count_folder = 0;
+
     while(1){
+        std::cout << std::endl << ":[" << current_folder << "]$ cd ";
         std::cin >> command;
         if(command == "exit")
             break;
@@ -85,7 +109,23 @@ void view_mode(const char *device_name){
         if(index == UINT_MAX)
             continue;
 
-        entries = print_folder_content(device, entries[index].index_inode, entries[index].name);
+        if(!strcmp(entries[index].name, "..")){
+            std::string temp_name = current_folder;
+            int ind;
+            for(int i = 0; i < temp_name.size(); i++)
+                if(temp_name[i] == '/')
+                    ind = i;
+            temp_name = "";
+            for(int j = 0; j < ind; j++)
+                temp_name += current_folder[j];
+            current_folder = temp_name; 
+        }
+        else{
+            current_folder += "/";
+            current_folder += entries[index].name;
+        }
+
+        entries = print_folder_content(device, entries[index].index_inode, current_folder);
     }
     fclose(device);
 }

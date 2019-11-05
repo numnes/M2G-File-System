@@ -24,9 +24,11 @@ std::vector<directory_entry> print_folder_content(FILE *device, unsigned int ino
     std::string tipes[4] = {"FREE", "file", "directory", "unknow_type"};
     std::vector<directory_entry> entries = get_dir_entries_from_inode_object(device, inode_index);
 
-    std::cout << std::endl << "Criado Em\t\tModificado Em\t\tTipo\t\tNome" << std::endl;
+    std::cout << std::endl << "Tamanho\t\tCriado Em\t\tModificado Em\t\tTipo\t\tNome" << std::endl;
     for(int i = 0; i < entries.size(); i++){
         inode inode_at = get_inode_by_index(device, entries[i].index_inode);
+
+        printf("%5lubytes\t", inode_at.size);
          
         print_date_from_epoch(inode_at.creation_time);
         std::cout << "\t";
@@ -43,7 +45,6 @@ std::vector<directory_entry> print_folder_content(FILE *device, unsigned int ino
 }
 
 int get_idex_list_de_by_name(std::string name, std::vector<directory_entry> entries){
-    std::cout << "tatatatatattatatattaaaaaaaaaaaaaaaa" << std::endl;
     for(int i = 0; i < entries.size(); i++){
         if(entries[i].name == name)
             return i;
@@ -124,7 +125,6 @@ void view_mode(const char *device_name){
             current_folder += "/";
             current_folder += entries[index].name;
         }
-
         entries = print_folder_content(device, entries[index].index_inode, current_folder);
     }
     fclose(device);

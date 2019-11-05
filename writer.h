@@ -127,7 +127,7 @@ unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned i
             }
         }else{
             inode_update(device, inode_index, updated_inode);
-            return updated_inode.size;
+            return 0;
         }
     }
     inode_update(device, inode_index, updated_inode);

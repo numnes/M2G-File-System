@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 all: clear m2g
 
 m2g: main.cpp structures.h utils.h format_controller.h reader_controller.h writer_controller.h view_mode.h
@@ -13,3 +14,20 @@ build:
 
 cl_screen:
 	clear
+=======
+all: clear m2g
+
+m2g: main.cpp structures.h utils.h format_controller.h reader_controller.h writer_controller.h view_mode.h
+	g++ main.cpp structures.h utils.h format_controller.h -o m2g -std=c++11
+
+clear:
+	rm -rf *.o *~ m2g
+
+testF: cl_screen all build
+
+build:
+	./m2g --format teste.img
+
+cl_screen:
+	clear
+>>>>>>> 83e885888113b5220f80da434ea515673be6a2dc

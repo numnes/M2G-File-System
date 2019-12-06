@@ -80,6 +80,7 @@ unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned i
     unsigned int ad_inode = (sb.ad_inode_tab * block_size) + (inode_index * 62);
     unsigned int null_ptr_dir = sb.num_blocks + 1;
     unsigned int null_ptr_indir = sb.num_inodes + 1;
+    unsigned long file_length;
     inode updated_inode;
 
     fseek(device, ad_inode, SEEK_SET);
@@ -122,14 +123,17 @@ unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned i
             }
             if(!direct){ // todos os ponteiros diretos foram usados
                 if(updated_inode.inderect_pointer == null_ptr_indir) // o ponteiro para o inode indireto não estava definido
-                    updated_inode.inderect_pointer = inode_alloc(device);  
-                updated_inode.size += write_data_in_inode_from_file(device, data, updated_inode.inderect_pointer, data_length);
+                    updated_inode.inderect_pointer = inode_alloc(device);
+                updated_inode.size = file_length;
+                write_data_in_inode_from_file(device, data, updated_inode.inderect_pointer, data_length);
             }
         }else{
+            updated_inode.size = file_length;
             inode_update(device, inode_index, updated_inode);
             return 0;
         }
     }
+    updated_inode.size = file_length;
     inode_update(device, inode_index, updated_inode);
     return updated_inode.size;
 }

@@ -21,7 +21,7 @@ void print_date_from_epoch(time_t time){
 }
 
 std::vector<directory_entry> print_folder_content(FILE *device, unsigned int inode_index, std::string folder_name = "root"){
-    std::string tipes[4] = {"FREE", "file", "directory", "unknow_type"};
+    std::string tipes[4] = {"FREE", "file", "directory", "link"};
     std::vector<directory_entry> entries = get_dir_entries_from_inode_object(device, inode_index);
 
     std::cout << std::endl << "Tamanho\t\tCriado Em\t\tModificado Em\t\tTipo\t\tNome" << std::endl;
@@ -29,7 +29,7 @@ std::vector<directory_entry> print_folder_content(FILE *device, unsigned int ino
         inode inode_at = get_inode_by_index(device, entries[i].index_inode);
 
         printf("%5lubytes\t", inode_at.size);
-         
+
         print_date_from_epoch(inode_at.creation_time);
         std::cout << "\t";
         print_date_from_epoch(inode_at.modified_time);
@@ -60,17 +60,17 @@ std::string get_entry_command(std::string command){
 
     size_t pos = 0;
     std::string token;
-    
+
     while ((pos = destiny_path.find(delimiter)) != std::string::npos) {
         token = destiny_path.substr(0, pos);
-        ncoms ++;      
+        ncoms ++;
         destiny_path.erase(0, pos + delimiter.length());
     }
     ncoms ++;
     if(ncoms > 2)
         destiny_path = "ERROR NAME";
     return destiny_path;
-} 
+}
 
 void view_mode(const char *device_name){
     FILE *device;
@@ -91,7 +91,7 @@ void view_mode(const char *device_name){
         std::cin >> command;
         if(command == "exit")
             break;
-        
+
         unsigned int index = UINT_MAX;
         std::string directorie_cd_name = get_entry_command(command);
 
@@ -119,7 +119,7 @@ void view_mode(const char *device_name){
             temp_name = "";
             for(int j = 0; j < ind; j++)
                 temp_name += current_folder[j];
-            current_folder = temp_name; 
+            current_folder = temp_name;
         }
         else{
             current_folder += "/";

@@ -28,11 +28,11 @@ unsigned int inode_alloc(FILE *device){
     new_inode.last_access_time = local_time;
     new_inode.creation_time = local_time;
     new_inode.modified_time = local_time;
-    new_inode.always_zero = 0;
+    new_inode.link_count = 0;
     for(int i = 0; i < 8; i++)
         new_inode.direct_pointers[i] = null_ptr_dir;
     new_inode.inderect_pointer = null_ptr_indir;
-    
+
     fseek(device, ad_new_inode, SEEK_SET);
     fwrite(&new_inode, sizeof(inode), 1, device);
 
@@ -51,9 +51,9 @@ bool inode_update(FILE *device, unsigned int inode_index, inode updated_inode){
 
     updated_inode.last_access_time = local_time;
     updated_inode.modified_time = local_time;
-   
+
     fseek(device, ad_updated_inode, SEEK_SET);
-    
+
     return fwrite(&updated_inode, sizeof(inode), 1, device);
 }
 
@@ -64,7 +64,7 @@ bool init_root_dir(FILE *device, unsigned int inode_index){
     unsigned int block_size = (1024 << sb.pot_block_size);
     unsigned int ad_inode = (sb.ad_inode_tab * block_size) + (inode_index * 62);
     inode updated_inode;
-    
+
     unsigned int new_block = get_empty_block(device);
     set_block_used(device, new_block);
     updated_inode.direct_pointers[0] = new_block;
@@ -87,7 +87,7 @@ unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned i
 
 
     while(*data_length > 0){
-        
+
         if(are_free_blocks(device)){
             unsigned int block = get_empty_block(device);
             unsigned long ad_block = block * block_size;
@@ -95,7 +95,7 @@ unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned i
 
             set_block_used(device, block);
             fseek(device, ad_block, SEEK_SET);
-                        
+
             /////Gravação dos dados
             if(*data_length >= block_size){
                 unsigned char buffer[block_size];
@@ -105,7 +105,7 @@ unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned i
                 updated_inode.size += block_size;
             }
             else{
-                unsigned char buffer[*data_length]; 
+                unsigned char buffer[*data_length];
                 fread(&buffer, *data_length, 1, data);
                 fwrite(&buffer, *data_length, 1, device);
                 *data_length = 0;
@@ -122,7 +122,7 @@ unsigned long write_data_in_inode_from_file(FILE *device, FILE *data, unsigned i
             }
             if(!direct){ // todos os ponteiros diretos foram usados
                 if(updated_inode.inderect_pointer == null_ptr_indir) // o ponteiro para o inode indireto não estava definido
-                    updated_inode.inderect_pointer = inode_alloc(device);  
+                    updated_inode.inderect_pointer = inode_alloc(device);
                 updated_inode.size += write_data_in_inode_from_file(device, data, updated_inode.inderect_pointer, data_length);
             }
         }else{
@@ -183,13 +183,13 @@ bool write_directory_entry_in_inode(FILE *device, directory_entry de, unsigned i
     unsigned int null_ptr_dir = sb.num_blocks + 1;
     unsigned int null_ptr_indir = sb.num_inodes + 1;
     inode updated_inode;
-    
+
     char free_dir_name[27];
     memset(free_dir_name, 0, 27);
 
     fseek(device, ad_inode, SEEK_SET);
     fread(&updated_inode, sizeof(inode), 1, device);
-    
+
     bool end_dir_pointers = false;
 
     for(int i = 0; i < 8; i++){
@@ -221,12 +221,12 @@ bool write_directory_entry_in_inode(FILE *device, directory_entry de, unsigned i
     if(updated_inode.inderect_pointer != null_ptr_indir){
         return write_directory_entry_in_inode(device, de, updated_inode.inderect_pointer);
     }
-    
+
     unsigned int index_inode = inode_alloc(device);
     updated_inode.inderect_pointer = index_inode;
     inode_update(device, inode_index, updated_inode);
     return write_directory_entry_in_inode(device, de, updated_inode.inderect_pointer);
-    
+
 }
 
 bool remove_dir_entry(FILE *device, char *path){
@@ -242,7 +242,7 @@ bool remove_dir_entry(FILE *device, char *path){
 
     size_t pos = 0;
     std::string token;
-    
+
     while ((pos = destiny_path.find(delimiter)) != std::string::npos) {
         token = destiny_path.substr(0, pos);
         directories_path.push_back(token);

@@ -19,7 +19,7 @@ typedef struct inode{
     unsigned int last_access_time;
     unsigned int creation_time;
     unsigned int modified_time;
-    unsigned int always_zero;
+    unsigned int link_count;
     unsigned int direct_pointers[8];
     unsigned int inderect_pointer;
 } __attribute__((packed)) inode;

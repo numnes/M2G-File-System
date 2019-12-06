@@ -1,7 +1,7 @@
 all: clear m2g
 
 m2g: main.cpp structures.h utils.h format_controller.h reader_controller.h writer_controller.h view_mode.h
-	g++ main.cpp structures.h utils.h format_controller.h -o m2g 
+	g++ main.cpp structures.h utils.h format_controller.h -o m2g -std=c++11
 
 clear:
 	rm -rf *.o *~ m2g

@@ -17,19 +17,19 @@ bool import_file(const char *file_source_name, const char *device_name, const ch
 
     file_source = fopen(file_source_name,"rb+");
     device = fopen(device_name,"rb+");
-    
+
     unsigned int inode_destiny = 0;
     if(!root){
         inode_destiny = find_inode_from_path(device, path_into_device);
     }
-    
+
     if(inode_destiny == UINT_MAX){
         std::cout << "ERRO!\n\nO caminho para a pasta de destino não foi encontrado!" << std::endl;
         return false;
     }
 
     std::string name_source = get_name_dir(file_source_name);
-    
+
     int size_vchar = name_source.length();
     char name_vchar[size_vchar];
     for(int i = 0; i < size_vchar; i++)
@@ -54,16 +54,16 @@ bool import_file(const char *file_source_name, const char *device_name, const ch
     else{
         strcpy(str_path_new_file, name_vchar);
     }
-    
+
     if(find_inode_from_path(device, str_path_new_file) != UINT_MAX){
         std::cout << "\tJá existe um arquivo/diretorio com este mesmo nome na pasta de destino." << std::endl;
         ret = false;
     }
     else{
         directory_entry dir_entry_at = create_dir_entry(device, 1, name_vchar);
-        
+
         unsigned long data_length = get_size(file_source);
-        
+
         if(!write_data_in_inode_from_file(device, file_source, dir_entry_at.index_inode, &data_length)){
             std::cout << "ERRO!\n\nNão foi possivel gravar o arquivo!" << std::endl;
             //remover o dir entry
@@ -126,7 +126,7 @@ bool export_file(const char *folder_destiny_name, const char *device_name, const
             strcat(cat_name, name_file_vchar);
         }
     }
-    
+
     new_file = fopen(cat_name, "w+");
     fclose(new_file);
 
@@ -219,15 +219,40 @@ bool rm_file(const char *device_name, const char *path_into_device){
         std::cout << "Erro!\nNão foi possivel obter o caminho para o arquivo!" << std::endl;
         return false;
     }
-        
+
     std::string name_source = get_name_dir(path_into_device);
 
     int size_vchar = name_source.length();
 
     char name_vchar[size_vchar];
-    
+
     for(int i = 0; i < size_vchar; i++)
         name_vchar[i] = name_source[i];
+}
+
+bool link(const char *device_name, const char *file_source_name, const char *path_into_device)
+{
+  FILE *device;
+  device = fopen(device_name, "rb+");
+
+  std::string name_source = get_name_dir(file_source_name);
+
+  int size_vchar = name_source.length();
+
+  char name_vchar[size_vchar];
+
+  for(int i = 0; i < size_vchar; i++)
+      name_vchar[i] = name_source[i];
+  name_vchar[size_vchar] = '\0';
+
+  unsigned int source = find_inode_from_path(device,file_source_name);
+  unsigned int destiny = find_inode_from_path(device, path_into_device);
+  directory_entry de = create_dir_entry(device,3,name_vchar);
+  write_directory_entry_in_inode(device, de, destiny);
+
+  fclose(device);
+  return true;
+
 }
 
 

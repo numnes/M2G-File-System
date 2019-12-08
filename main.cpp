@@ -59,6 +59,7 @@ int main(int argc, const char **argv){
         std::cout << "ERRO!" << std::endl;
         return 1;
     }
+    /*
     else if(!strcmp(directive,"--remove") || !strcmp(directive,"-r")){
         const char *device_name = argv[2];
         const char *path_into_device = argv[3];
@@ -70,6 +71,7 @@ int main(int argc, const char **argv){
         std::cout << "ERRO!" << std::endl;
         return 1;
     }
+    */
     else if(!strcmp(directive,"--export") || !strcmp(directive,"-e")){
         const char *caminho_pasta_destino = argv[2];
         const char *device_name = argv[3];

@@ -21,7 +21,7 @@ void print_date_from_epoch(time_t time){
 }
 
 std::vector<directory_entry> print_folder_content(FILE *device, unsigned int inode_index, std::string folder_name = "root"){
-    std::string tipes[4] = {"FREE", "file", "directory", "link"};
+    std::string tipes[5] = {"FREE", "file", "directory", "link","hard-link"};
     std::vector<directory_entry> entries = get_dir_entries_from_inode_object(device, inode_index);
 
     std::cout << std::endl << "Tamanho\t\tCriado Em\t\tModificado Em\t\tTipo\t\tNome" << std::endl;
@@ -98,7 +98,7 @@ void view_mode(const char *device_name){
         for(unsigned int i = 0; i < entries.size(); i++){
             std::string st_name = entries[i].name;
             if(st_name == directorie_cd_name){
-                if(entries[i]._type != 2){
+                if(entries[i]._type < 2){
                     std::cout << "A entrada não é um diretorio!" << std::endl;
                     index = UINT_MAX;
                 }

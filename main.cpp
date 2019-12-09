@@ -83,7 +83,7 @@ int main(int argc, const char **argv){
         std::cout << "ERRO!" << std::endl;
         return 1;
     }
-    else if(!strcmp(directive,"-link") || !strcmp(directive,"-l")) {
+    else if(!strcmp(directive,"--link") || !strcmp(directive,"-l")) {
       const char *device_name = argv[2];
       const char *file_source_name = argv[3];
       const char *path_into_device = argv[4];

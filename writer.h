@@ -313,20 +313,24 @@ bool remove_dir_entrie_from_inode(FILE *device, unsigned int index_inode, std::s
                 if(temp_de._type > 0 && temp_de._type < 5){
                     std::string name = temp_de.name;
                     if(name == dir_entrie_name){
-                        fseek(device, -sizeof(directory_entry) , SEEK_SET);
-                        unsigned char de_empty[sizeof(directory_entry)] = {};
-                        fwrite(de_empty, sizeof(directory_entry), 1, device);
+                        std::cout << "removeu \n";
+                        fseek(device, -sizeof(directory_entry) , SEEK_CUR);
+                        int count = sizeof(directory_entry);
+                        while(count--)
+                            fputc(0, device);
                         return true;
                     }
                 }
             }
         }else{
+            std::cout<< i << "morreu aqui\n";
             return false;
         }
     }
     if(inode_at.inderect_pointer != null_ptr_indir){
         return remove_dir_entrie_from_inode(device, inode_at.inderect_pointer, dir_entrie_name);
     }
+    std::cout<<"morreu aqui2\n";
     return false;
 }
 

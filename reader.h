@@ -129,6 +129,21 @@ unsigned int find_dir_entry(FILE *device, std::string name, unsigned int index_i
     return UINT_MAX;
 }
 
+directory_entry get_dir_entry_object(FILE *device, std::string name, unsigned int index_inode){
+    std::vector<directory_entry> entries = get_dir_entries_from_inode_object(device, index_inode);
+
+    directory_entry de;
+    de._type = 0;
+
+    for(int i = 0; i < entries.size(); i++){
+        if(entries[i].name == name){
+            de =  entries[i];
+            break;
+        }
+    }
+    return de;
+}
+
 unsigned int find_inode_from_path(FILE *device, const char *path){
     superblock sb;
     sb = read_superblock(device);

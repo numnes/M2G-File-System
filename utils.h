@@ -157,14 +157,6 @@ void remove_final_dir(char *path){
         if(path[i] == '/')
             index_last_separator = i;
     }
-    if(index_last_separator == 0)
-        return;
-    char temp_str[index_last_separator];
-    for(int i = 0; i < index_last_separator; i++){
-        temp_str[i] = path[i];
-    }
-    memset(path, 0, size);
-    strcpy(path, temp_str);
     path[index_last_separator] = '\0';
 }
 

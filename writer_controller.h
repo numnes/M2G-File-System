@@ -214,11 +214,16 @@ bool rm_file(const char *device_name, const char *path_into_device){
     char path_to_folder[size_str_path];
     strcpy(path_to_folder, path_into_device);
 
-    remove_final_dir(path_to_folder);
+    unsigned int inode_destiny;
 
-    unsigned int inode_destiny = find_inode_from_path(device, path_to_folder);
+    remove_final_dir(path_to_folder);
+    if(strcmp(path_to_folder, ""))
+        inode_destiny = find_inode_from_path(device, path_to_folder);
+    else
+        inode_destiny = 0;
+
     if(inode_destiny == UINT_MAX){
-        std::cout << "Erro!\nNão foi possivel obter o caminho para o arquivo!" << std::endl;
+        std::cout << "Erro!\nNão foi possivel obter o caminho!" << std::endl;
         return false;
     }
 
@@ -228,10 +233,21 @@ bool rm_file(const char *device_name, const char *path_into_device){
     for(int i = 0; i < size_vchar; i++)
         name_vchar[i] = name_source[i];
 
-    std::cout << "teste  \n";
+    std::cout << path_into_device << " arquivo\n";
     unsigned int inode_content = find_inode_from_path(device, path_into_device);
-    bool result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);
+    if(inode_content == 0){
+        std::cout << "Destino não encontrado!\n";
+        return false;
+    }
+    
+    directory_entry de_at = get_dir_entry_object(device, path_into_device, inode_destiny);
+    char type_at = de_at._type;
 
+    if()
+
+
+    bool result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);
+    std::cout << result << " teste  \n" ;
     if (result){
         clear_inode(device, inode_content);
         return true;

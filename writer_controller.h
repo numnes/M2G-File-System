@@ -256,7 +256,32 @@ bool link(const char *device_name, const char *file_source_name, const char *pat
 
   unsigned int source = find_inode_from_path(device,file_source_name);
   unsigned int destiny = find_inode_from_path(device, path_into_device);
-  directory_entry de = create_dir_entry(device,3,name_vchar);
+  directory_entry de = create_dir_entry(device,3,name_vchar,source);
+  write_directory_entry_in_inode(device, de, destiny);
+
+  fclose(device);
+  return true;
+
+}
+
+bool hard_link(const char *device_name, const char *file_source_name, const char *path_into_device)
+{
+  FILE *device;
+  device = fopen(device_name, "rb+");
+
+  std::string name_source = get_name_dir(file_source_name);
+
+  int size_vchar = name_source.length();
+
+  char name_vchar[size_vchar];
+
+  for(int i = 0; i < size_vchar; i++)
+      name_vchar[i] = name_source[i];
+  name_vchar[size_vchar] = '\0';
+
+  unsigned int source = find_inode_from_path(device,file_source_name);
+  unsigned int destiny = find_inode_from_path(device, path_into_device);
+  directory_entry de = create_dir_entry(device,3,name_vchar,source);
   write_directory_entry_in_inode(device, de, destiny);
 
   fclose(device);

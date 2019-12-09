@@ -98,7 +98,7 @@ void view_mode(const char *device_name){
         for(unsigned int i = 0; i < entries.size(); i++){
             std::string st_name = entries[i].name;
             if(st_name == directorie_cd_name){
-                if(entries[i]._type < 2){
+                if(entries[i]._type < 2 || entries[i]._type > 3 ){
                     std::cout << "A entrada não é um diretorio!" << std::endl;
                     index = UINT_MAX;
                 }

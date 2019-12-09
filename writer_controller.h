@@ -228,13 +228,15 @@ bool rm_file(const char *device_name, const char *path_into_device){
     for(int i = 0; i < size_vchar; i++)
         name_vchar[i] = name_source[i];
 
+    std::cout << "teste  \n";
     unsigned int inode_content = find_inode_from_path(device, path_into_device);
     bool result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);
 
-    if (result)
+    if (result){
         clear_inode(device, inode_content);
-    return 
-        false;
+        return true;
+    }
+    return false;
 }
 
 bool link(const char *device_name, const char *file_source_name, const char *path_into_device)

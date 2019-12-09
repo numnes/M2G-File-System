@@ -278,10 +278,20 @@ directory_entry create_dir_entry(FILE *device, unsigned char type, const char *n
     return de;
 }
 
+directory_entry create_dir_entry(FILE *device, unsigned char type, const char *name, unsigned int index_inode){
+    directory_entry de;
+
+    de.index_inode = index_inode;
+    de._type = type;
+    strcpy(de.name, name);
+
+    return de;
+}
+
 bool remove_dir_entrie_from_inode(FILE *device, unsigned int index_inode, std::string dir_entrie_name){
     superblock sb;
     sb = read_superblock(device);
-    
+
     std::vector<std::pair<unsigned int, std::string> > dir_entries;
 
     unsigned int block_size = (1024 << sb.pot_block_size);

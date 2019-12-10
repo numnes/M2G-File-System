@@ -239,7 +239,7 @@ bool rm_file(const char *device_name, const char *path_into_device){
         std::cout << "Destino não encontrado!\n";
         return false;
     }
-    
+
     // inode_destiny -> index do inode da pasta onde está o arquivo/diretorio/link a ser excluido
     // inode_content -> index do inode do arquivo a ser excluido
     // path_into_device -> caminho para o directorie entrie do arquivo a ser excluido
@@ -253,14 +253,12 @@ bool rm_file(const char *device_name, const char *path_into_device){
     return result;
 }
 
-bool link(const char *device_name, const char *file_source_name, const char *path_into_device)
+bool link(const char *device_name, const char *file_source_name, const char *path_into_device, bool root)
 {
   FILE *device;
   device = fopen(device_name, "rb+");
 
   std::string name_source = get_name_dir(file_source_name);
-
-  name_source+=" - link";
 
   int size_vchar = name_source.length();
 
@@ -271,7 +269,9 @@ bool link(const char *device_name, const char *file_source_name, const char *pat
   name_vchar[size_vchar] = '\0';
 
   unsigned int source = find_inode_from_path(device,file_source_name);
-  unsigned int destiny = find_inode_from_path(device, path_into_device);
+  unsigned int destiny = 0;
+  if(!root)
+    destiny = find_inode_from_path(device, path_into_device);
   directory_entry de = create_dir_entry(device,3,name_vchar,source);
   write_directory_entry_in_inode(device, de, destiny);
 
@@ -280,20 +280,19 @@ bool link(const char *device_name, const char *file_source_name, const char *pat
 
 }
 
-bool hard_link(const char *device_name, const char *file_source_name, const char *path_into_device)
+bool hard_link(const char *device_name, const char *file_source_name, const char *path_into_device, bool root)
 {
   FILE *device;
   device = fopen(device_name, "rb+");
 
   std::string name_source = get_name_dir(file_source_name);
   unsigned int source = find_inode_from_path(device,file_source_name);
-  unsigned int destiny = find_inode_from_path(device, path_into_device);
+  unsigned int destiny = 0;
+  if(!root)
+    destiny = find_inode_from_path(device, path_into_device);
   inode inode_source = get_inode_by_index(device,source);
   unsigned a = ++inode_source.link_count;
 
-  name_source+="(";
-  name_source+=a;
-  name_source+=")";
 
   int size_vchar = name_source.length();
 

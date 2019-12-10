@@ -256,6 +256,7 @@ bool link(const char *device_name, const char *file_source_name, const char *pat
   device = fopen(device_name, "rb+");
 
   std::string name_source = get_name_dir(file_source_name);
+  name_source.insert(0,"link-");
 
   int size_vchar = name_source.length();
 
@@ -288,19 +289,21 @@ bool hard_link(const char *device_name, const char *file_source_name, const char
   if(!root)
     destiny = find_inode_from_path(device, path_into_device);
   inode inode_source = get_inode_by_index(device, source);
-  unsigned a = ++inode_source.link_count;
+  unsigned int a = ++inode_source.link_count;
 
+  inode_update(device,source,inode_source);
 
+  std::string str = "";
+  str+=(a+'0');
+  str+='-';
 
-
-
+  name_source.insert(0,str);
   int size_vchar = name_source.length();
   char name_vchar[size_vchar];
 
   for(int i = 0; i < size_vchar; i++)
       name_vchar[i] = name_source[i];
   name_vchar[size_vchar] = '\0';
-
 
   directory_entry de = create_dir_entry(device,4,name_vchar,source);
   write_directory_entry_in_inode(device, de, destiny);

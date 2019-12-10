@@ -239,7 +239,7 @@ bool rm_file(const char *device_name, const char *path_into_device){
         std::cout << "Destino não encontrado!\n";
         return false;
     }
-    
+
     directory_entry de_at = get_dir_entry_object(device, path_into_device, inode_destiny);
     char type_at = de_at._type;
 
@@ -261,6 +261,8 @@ bool link(const char *device_name, const char *file_source_name, const char *pat
   device = fopen(device_name, "rb+");
 
   std::string name_source = get_name_dir(file_source_name);
+
+  name_source+=" - link";
 
   int size_vchar = name_source.length();
 
@@ -286,6 +288,14 @@ bool hard_link(const char *device_name, const char *file_source_name, const char
   device = fopen(device_name, "rb+");
 
   std::string name_source = get_name_dir(file_source_name);
+  unsigned int source = find_inode_from_path(device,file_source_name);
+  unsigned int destiny = find_inode_from_path(device, path_into_device);
+  inode inode_source = get_inode_by_index(device,source);
+  unsigned a = ++inode_source.link_count;
+
+  name_source+="(";
+  name_source+=a;
+  name_source+=")";
 
   int size_vchar = name_source.length();
 
@@ -295,9 +305,8 @@ bool hard_link(const char *device_name, const char *file_source_name, const char
       name_vchar[i] = name_source[i];
   name_vchar[size_vchar] = '\0';
 
-  unsigned int source = find_inode_from_path(device,file_source_name);
-  unsigned int destiny = find_inode_from_path(device, path_into_device);
-  directory_entry de = create_dir_entry(device,3,name_vchar,source);
+
+  directory_entry de = create_dir_entry(device,4,name_vchar,source);
   write_directory_entry_in_inode(device, de, destiny);
 
   fclose(device);

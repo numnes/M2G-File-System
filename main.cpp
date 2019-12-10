@@ -92,6 +92,17 @@ int main(int argc, const char **argv){
       std::cout << "ERRO!" << std::endl;
       return 1;
     }
+    else if(!strcmp(directive,"--hardLink") || !strcmp(directive,"-hl")) {
+      const char *device_name = argv[2];
+      const char *file_source_name = argv[3];
+      const char *path_into_device = argv[4];
+      if(hard_link(device_name,file_source_name,path_into_device)){
+        std::cout << "Sucesso!" << std::endl;
+        return 0;
+      }
+      std::cout << "ERRO!" << std::endl;
+      return 1;
+    }
     else{
         print_help();
         return 0;

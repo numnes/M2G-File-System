@@ -55,6 +55,16 @@ void dec_free_blocks(FILE *device){
     fwrite(&sb, sizeof(superblock), 1, device);
 }
 
+void inc_free_blocks(FILE *device){
+    superblock sb;
+    sb = read_superblock(device);
+
+    sb.num_free_blocks = sb.num_free_blocks +1;
+
+    fseek(device, 0, SEEK_SET);
+    fwrite(&sb, sizeof(superblock), 1, device);
+}
+
 void dec_free_inodes(FILE *device){
     superblock sb;
     sb = read_superblock(device);
@@ -65,6 +75,15 @@ void dec_free_inodes(FILE *device){
     fwrite(&sb, sizeof(superblock), 1, device);
 }
 
+void inc_free_inodes(FILE *device){
+    superblock sb;
+    sb = read_superblock(device);
+
+    sb.num_free_inodes = sb.num_free_inodes +1;
+
+    fseek(device, 0, SEEK_SET);
+    fwrite(&sb, sizeof(superblock), 1, device);
+}
 
 unsigned int get_empty_block(FILE *device){
     superblock sb;
@@ -106,6 +125,28 @@ bool set_block_used(FILE *device, unsigned int block){
     fwrite(bitmap, sizeof(unsigned char) * num_blocks, 1, device);
 
     dec_free_blocks(device);
+    
+    return true;
+}
+
+bool set_block_free(FILE *device, unsigned int block){
+    superblock sb;
+    sb = read_superblock(device);
+    unsigned int block_size = (1024 << sb.pot_block_size);
+    unsigned long ad_block_bitmp = sb.ad_block_bitmp * block_size;
+    unsigned int num_blocks = sb.num_blocks;
+
+    unsigned char bitmap[num_blocks];
+
+    fseek(device, ad_block_bitmp, SEEK_SET);
+    fread(bitmap, sizeof(unsigned char) * num_blocks, 1, device);
+
+    toggle_bit_at(bitmap, block, false);
+
+    fseek(device, ad_block_bitmp, SEEK_SET);
+    fwrite(bitmap, sizeof(unsigned char) * num_blocks, 1, device);
+
+    inc_free_blocks(device);
     
     return true;
 }

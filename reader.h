@@ -117,7 +117,6 @@ std::vector<directory_entry> get_dir_entries_from_inode_object(FILE *device, uns
     return dir_entries;
 }
 
-
 unsigned int find_dir_entry(FILE *device, std::string name, unsigned int index_inode){
     std::vector<std::pair<unsigned int, std::string> > entries = get_dir_entries_from_inode(device, index_inode);
 

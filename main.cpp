@@ -85,7 +85,8 @@ int main(int argc, const char **argv){
       const char *device_name = argv[2];
       const char *file_source_name = argv[3];
       const char *path_into_device = argv[4];
-      if(link(device_name,file_source_name,path_into_device)){
+      bool root = argc < 5;
+      if(link(device_name,file_source_name,path_into_device,root)){
         std::cout << "Sucesso!" << std::endl;
         return 0;
       }
@@ -96,7 +97,8 @@ int main(int argc, const char **argv){
       const char *device_name = argv[2];
       const char *file_source_name = argv[3];
       const char *path_into_device = argv[4];
-      if(hard_link(device_name,file_source_name,path_into_device)){
+      bool root = argc < 5;
+      if(hard_link(device_name,file_source_name,path_into_device,root)){
         std::cout << "Sucesso!" << std::endl;
         return 0;
       }

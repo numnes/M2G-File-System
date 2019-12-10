@@ -252,34 +252,39 @@ bool rm_file(const char *device_name, const char *path_into_device){
 
 bool link(const char *device_name, const char *file_source_name, const char *path_into_device, bool root)
 {
-  FILE *device;
-  device = fopen(device_name, "rb+");
+    FILE *device;
+    device = fopen(device_name, "rb+");
 
+<<<<<<< HEAD
   std::string name_source = get_name_dir(file_source_name);
   name_source.insert(0,"link-");
+=======
+    std::string name_source = get_name_dir(file_source_name);
+>>>>>>> 95c533331ff0ff4906eb9f4f02a4573987ff305e
 
-  int size_vchar = name_source.length();
+    int size_vchar = name_source.length();
 
-  char name_vchar[size_vchar];
+    char name_vchar[size_vchar];
 
-  for(int i = 0; i < size_vchar; i++)
-      name_vchar[i] = name_source[i];
-  name_vchar[size_vchar] = '\0';
+    for(int i = 0; i < size_vchar; i++)
+        name_vchar[i] = name_source[i];
+    name_vchar[size_vchar] = '\0';
 
-  unsigned int source = find_inode_from_path(device,file_source_name);
-  unsigned int destiny = 0;
-  if(!root)
+    unsigned int source = find_inode_from_path(device,file_source_name);
+    unsigned int destiny = 0;
+    if(!root)
     destiny = find_inode_from_path(device, path_into_device);
-  directory_entry de = create_dir_entry(device,3,name_vchar,source);
-  write_directory_entry_in_inode(device, de, destiny);
+    directory_entry de = create_dir_entry(device,3,name_vchar,source);
+    write_directory_entry_in_inode(device, de, destiny);
 
-  fclose(device);
-  return true;
+    fclose(device);
+    return true;
 
 }
 
 bool hard_link(const char *device_name, const char *file_source_name, const char *path_into_device, bool root)
 {
+<<<<<<< HEAD
   FILE *device;
   device = fopen(device_name, "rb+");
 
@@ -300,16 +305,36 @@ bool hard_link(const char *device_name, const char *file_source_name, const char
   name_source.insert(0,str);
   int size_vchar = name_source.length();
   char name_vchar[size_vchar];
+=======
+    FILE *device;
+    device = fopen(device_name, "rb+");
+>>>>>>> 95c533331ff0ff4906eb9f4f02a4573987ff305e
 
-  for(int i = 0; i < size_vchar; i++)
-      name_vchar[i] = name_source[i];
-  name_vchar[size_vchar] = '\0';
+    std::string name_source = get_name_dir(file_source_name);
+    unsigned int source = find_inode_from_path(device, file_source_name);
+    unsigned int destiny = 0;
+    if(!root)
+        destiny = find_inode_from_path(device, path_into_device);
+    inode inode_source = get_inode_by_index(device, source);
+    unsigned a = ++inode_source.link_count;
+    std::cout<< "Ta aqui " << destiny << std::endl;
+    int size_vchar = name_source.length();
+    char name_vchar[size_vchar];
 
+<<<<<<< HEAD
   directory_entry de = create_dir_entry(device,4,name_vchar,source);
   write_directory_entry_in_inode(device, de, destiny);
+=======
+    for(int i = 0; i < size_vchar; i++)
+        name_vchar[i] = name_source[i];
+    name_vchar[size_vchar] = '\0';
 
-  fclose(device);
-  return true;
+    directory_entry de = create_dir_entry(device, 4, name_vchar, source);
+    write_directory_entry_in_inode(device, de, destiny);
+>>>>>>> 95c533331ff0ff4906eb9f4f02a4573987ff305e
+
+    fclose(device);
+    return true;
 
 }
 

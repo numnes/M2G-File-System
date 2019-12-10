@@ -24,7 +24,7 @@ bool import_file(const char *file_source_name, const char *device_name, const ch
     }
 
     if(inode_destiny == UINT_MAX){
-        std::cout << "ERRO!\n\nO caminho para a pasta de destino não foi encontrado!" << std::endl;
+        std::cout << "O caminho para a pasta de destino não foi encontrado!" << std::endl;
         return false;
     }
 
@@ -67,13 +67,13 @@ bool import_file(const char *file_source_name, const char *device_name, const ch
         std::cout << "Tamanho do arquivo  " << data_length << "\n";
 
         if(!write_data_in_inode_from_file(device, file_source, dir_entry_at.index_inode, &data_length)){
-            std::cout << "ERRO!\n\nNão foi possivel gravar o arquivo!" << std::endl;
+            std::cout << "Não foi possivel gravar o arquivo!" << std::endl;
             //remover o dir entry
             return false;
         }
 
         if(!write_directory_entry_in_inode(device, dir_entry_at, inode_destiny)){
-            std::cout << "ERRO!\n\nNão foi possivel criar o arquivo!" << std::endl;
+            std::cout << "Não foi possivel criar o arquivo!" << std::endl;
             return false;
         }
 
@@ -101,7 +101,7 @@ bool export_file(const char *folder_destiny_name, const char *device_name, const
     unsigned int inode_destiny = find_inode_from_path(device, path_into_device);
 
     if(inode_destiny == UINT_MAX){
-        std::cout << "Erro!\nNão foi possivel obter o caminho para o novo diretorio!" << std::endl;
+        std::cout << "Não foi possivel obter o caminho para o novo diretorio!" << std::endl;
         return false;
     }
 
@@ -162,7 +162,7 @@ bool mk_dir(const char *device_name, const char *path_into_device){
     }
 
     if(inode_destiny == UINT_MAX){
-        std::cout << "Erro!\nNão foi possivel obter o caminho para o novo diretorio!" << std::endl;
+        std::cout << "Não foi possivel obter o caminho para o novo diretorio!" << std::endl;
         return false;
     }
 
@@ -198,7 +198,7 @@ bool mk_dir(const char *device_name, const char *path_into_device){
 
         write_directory_entry_in_inode(device, dir_prev, dir_entry_at.index_inode);
         if(!write_directory_entry_in_inode(device, dir_entry_at, inode_destiny)){
-            std::cout << "ERRO!\n\nNão foi possivel criar a pasta!" << std::endl;
+            std::cout << "Não foi possivel criar a pasta!" << std::endl;
             return false;
         }
     }
@@ -223,7 +223,7 @@ bool rm_file(const char *device_name, const char *path_into_device){
         inode_destiny = 0;
 
     if(inode_destiny == UINT_MAX){
-        std::cout << "Erro!\nNão foi possivel obter o caminho!" << std::endl;
+        std::cout << "Não foi possivel obter o caminho!" << std::endl;
         return false;
     }
 
@@ -232,8 +232,6 @@ bool rm_file(const char *device_name, const char *path_into_device){
     char name_vchar[size_vchar];
     for(int i = 0; i < size_vchar; i++)
         name_vchar[i] = name_source[i];
-
-    std::cout << path_into_device << " arquivo\n";
     unsigned int inode_content = find_inode_from_path(device, path_into_device);
     if(inode_content == 0){
         std::cout << "Destino não encontrado!\n";
@@ -244,8 +242,7 @@ bool rm_file(const char *device_name, const char *path_into_device){
     // inode_content -> index do inode do arquivo a ser excluido
     // path_into_device -> caminho para o directorie entrie do arquivo a ser excluido
     // name_source -> nome do arquivo a ser excluido
-
-    directory_entry de_at = get_dir_entry_object(device, path_into_device, inode_destiny);
+    directory_entry de_at = get_dir_entry_object(device, name_source, inode_destiny);
     inode inode_at        = get_inode_by_index(device, inode_content);
 
     bool result = delete_file(device, inode_destiny, inode_content, name_source, de_at, inode_at);
@@ -260,7 +257,7 @@ bool link(const char *device_name, const char *file_source_name, const char *pat
 
   std::string name_source = get_name_dir(file_source_name);
 
-  name_source+=" - link";
+  name_source+="-link";
 
   int size_vchar = name_source.length();
 

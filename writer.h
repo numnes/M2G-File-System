@@ -205,7 +205,7 @@ bool write_directory_entry_in_inode(FILE *device, directory_entry de, unsigned i
             for( int j = 0; j < block_size; j += sizeof(directory_entry) ){
                 directory_entry temp_de;
                 fread(&temp_de, sizeof(directory_entry), 1, device);
-                if(temp_de._type == 3 || (temp_de._type == 0 && (!strcmp(temp_de.name, free_dir_name)))){
+                if(temp_de._type == 0 && (!strcmp(temp_de.name, free_dir_name))){
                     fseek(device, -1 * (sizeof(directory_entry)), SEEK_CUR);
                     fwrite(&de, sizeof(directory_entry), 1, device);
                     return true;
@@ -315,7 +315,6 @@ bool remove_dir_entrie_from_inode(FILE *device, unsigned int index_inode, std::s
                 if(temp_de._type > 0 && temp_de._type < 5){
                     std::string name = temp_de.name;
                     if(name == dir_entrie_name){
-                        std::cout << "removeu \n";
                         fseek(device, -sizeof(directory_entry) , SEEK_CUR);
                         int count = sizeof(directory_entry);
                         while(count--)
@@ -325,14 +324,12 @@ bool remove_dir_entrie_from_inode(FILE *device, unsigned int index_inode, std::s
                 }
             }
         }else{
-            std::cout<< i << "morreu aqui\n";
             return false;
         }
     }
     if(inode_at.inderect_pointer != null_ptr_indir){
         return remove_dir_entrie_from_inode(device, inode_at.inderect_pointer, dir_entrie_name);
     }
-    std::cout<<"morreu aqui2\n";
     return false;
 }
 
@@ -388,8 +385,14 @@ bool clear_directory(FILE *device, unsigned int index_inode){
             for( int j = 0; j < block_size; j += sizeof(directory_entry) ){
                 directory_entry temp_de;
                 fread(&temp_de, sizeof(directory_entry), 1, device);
-                inode inode_dir_entry = get_inode_by_index(device, temp_de.index_inode);
-                result = result && delete_file(device, index_inode, temp_de.index_inode, temp_de.name, temp_de, inode_dir_entry);
+                if(temp_de._type != 0){
+                    if(!strcmp(temp_de.name, "..")){
+                        result = result && remove_dir_entrie_from_inode(device, index_inode, temp_de.name);
+                        continue;
+                    }
+                    inode inode_dir_entry = get_inode_by_index(device, temp_de.index_inode);
+                    result = result && delete_file(device, index_inode, temp_de.index_inode, temp_de.name, temp_de, inode_dir_entry);
+                }
             }
         }else{
             return result;
@@ -402,10 +405,10 @@ bool clear_directory(FILE *device, unsigned int index_inode){
 }
 
 bool delete_file(FILE *device, unsigned int inode_destiny, unsigned int inode_content, std::string name_source, directory_entry de_at, inode inode_at){
-    char type_at = de_at._type;
+        
+    unsigned char type_at = de_at._type;
 
     bool result = false;
-
     if(inode_at.link_count == 0){
         if(type_at == 1){//arquivo
             result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);

@@ -75,7 +75,7 @@ std::string get_entry_command(std::string command){
 void view_mode(const char *device_name){
     FILE *device;
     if(!(device = fopen(device_name, "rb+"))){
-        std::cout << "ERRO!\n\nNão foi possivel acessar o disco!" << std::endl;
+        std::cout << "Não foi possivel acessar o disco!\n\nERRO!\n";
         return;
     }
     std::string str_device_name = device_name;

@@ -5,6 +5,8 @@
 #include "structures.h"
 #include "reader.h"
 
+bool delete_file(FILE *device, unsigned int inode_destiny, unsigned int inode_content, std::string name_source, directory_entry de_at, inode inode_at);
+
 unsigned int inode_alloc(FILE *device){
     superblock sb;
     sb = read_superblock(device);
@@ -350,9 +352,11 @@ void clear_inode (FILE *device, unsigned int index_inode){
 
     for(int i = 0; i < 8; i++){
         if(inode_at.direct_pointers[i] != null_ptr_dir){
-            fseek(device, inode_at.direct_pointers[i], SEEK_SET);
-            unsigned char bloco_limpo[block_size] = {};
-            fwrite(bloco_limpo, block_size, 1, device);
+            fseek(device, inode_at.direct_pointers[i]*block_size, SEEK_SET);
+            int count = block_size;
+            while(count --)
+                fputc(0, device);
+            set_block_free(device, inode_at.direct_pointers[i]);
         }else{
             return;
         }
@@ -360,6 +364,78 @@ void clear_inode (FILE *device, unsigned int index_inode){
     if(inode_at.inderect_pointer != null_ptr_indir){
         clear_inode(device, inode_at.inderect_pointer);
     }
+    inode free_inode;
+    free_inode.type[0] = 0;
+    inode_update(device, index_inode, free_inode);
+    inc_free_inodes(device);
+}
+
+bool clear_directory(FILE *device, unsigned int index_inode){
+    superblock sb;
+    sb = read_superblock(device);
+
+    bool result = true;
+
+    unsigned int block_size = (1024 << sb.pot_block_size);
+    inode inode_at = get_inode_by_index(device, index_inode);
+    unsigned int npointers = ceil(inode_at.size / block_size);
+    unsigned int null_ptr_dir = sb.num_blocks + 1;
+    unsigned int null_ptr_indir = sb.num_inodes + 1;
+
+    for(int i = 0; i < 8; i++){
+        if(inode_at.direct_pointers[i] != null_ptr_dir){
+            fseek(device, inode_at.direct_pointers[i]*block_size, SEEK_SET);
+            for( int j = 0; j < block_size; j += sizeof(directory_entry) ){
+                directory_entry temp_de;
+                fread(&temp_de, sizeof(directory_entry), 1, device);
+                inode inode_dir_entry = get_inode_by_index(device, temp_de.index_inode);
+                result = result && delete_file(device, index_inode, temp_de.index_inode, temp_de.name, temp_de, inode_dir_entry);
+            }
+        }else{
+            return result;
+        }
+    }
+    if(inode_at.inderect_pointer != null_ptr_indir){
+        result = result && clear_directory(device, inode_at.inderect_pointer);
+    }
+    return result;
+}
+
+bool delete_file(FILE *device, unsigned int inode_destiny, unsigned int inode_content, std::string name_source, directory_entry de_at, inode inode_at){
+    char type_at = de_at._type;
+
+    bool result = false;
+
+    if(inode_at.link_count == 0){
+        if(type_at == 1){//arquivo
+            result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);
+            if (result){
+                clear_inode(device, inode_content);
+                result = true;
+            }
+        }
+        else if (type_at == 2){//diretorio
+            result = clear_directory(device, inode_content);
+            if(result){
+                result = result && remove_dir_entrie_from_inode(device, inode_destiny, name_source);
+            }
+        }else if(type_at == 3){//link
+            result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);
+        }else if(type_at == 4){//hardlink
+            result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);
+            if(result){
+                clear_inode(device, inode_content);
+                result =  true;
+            }
+        }
+    }else{
+        result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);
+        if(result && type_at != 3){
+            inode_at.link_count -= 1;
+            inode_update(device, inode_content, inode_at);
+        }
+    }
+    return result;
 }
 
 #endif

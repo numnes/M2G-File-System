@@ -239,20 +239,24 @@ bool rm_file(const char *device_name, const char *path_into_device){
         std::cout << "Destino não encontrado!\n";
         return false;
     }
+<<<<<<< HEAD
 
     directory_entry de_at = get_dir_entry_object(device, path_into_device, inode_destiny);
     char type_at = de_at._type;
+=======
+    
+    // inode_destiny -> index do inode da pasta onde está o arquivo/diretorio/link a ser excluido
+    // inode_content -> index do inode do arquivo a ser excluido
+    // path_into_device -> caminho para o directorie entrie do arquivo a ser excluido
+    // name_source -> nome do arquivo a ser excluido
+>>>>>>> be9a57a0d89b8589f97fe4205ee7f6a76e55c3ff
 
-    if()
+    directory_entry de_at = get_dir_entry_object(device, path_into_device, inode_destiny);
+    inode inode_at        = get_inode_by_index(device, inode_content);
 
+    bool result = delete_file(device, inode_destiny, inode_content, name_source, de_at, inode_at);
 
-    bool result = remove_dir_entrie_from_inode(device, inode_destiny, name_source);
-    std::cout << result << " teste  \n" ;
-    if (result){
-        clear_inode(device, inode_content);
-        return true;
-    }
-    return false;
+    return result;
 }
 
 bool link(const char *device_name, const char *file_source_name, const char *path_into_device)

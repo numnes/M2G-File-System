@@ -1,3 +1,11 @@
+						 __  __ ____   ____ 
+						|  \/  |___ \ / ___|
+						| |\/| | __) | |  _ 
+						| |  | |/ __/| |_| |
+						|_|  |_|_____|\____|
+						   -File System-
+
+
 Compilar -> Acessar o diretorio onde está o programa e executar o comando ‘make’.
 
 Utilizar -> Para utilizar o software de controle do sistema de arquivos basta executar o arquivo “m2g”. As diretivas que acompanham o comando de execução definem a ação a ser executada. 

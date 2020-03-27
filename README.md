@@ -10,7 +10,7 @@ Sistema de arquivos desenvolvido na disciplina de Sistemas Operacionais. Utiliza
 
 
 ### Compilar
-Para compilar o softwaregestor do sistema de arquivos basta clonar este repositorio, acessar o diretorio do programa e executar o comando ‘make’. Caso tudo dê certo o programa estará pronto para ser usado.
+Para compilar o software gestor do sistema de arquivos basta clonar este repositorio, acessar o diretorio do programa e executar o comando ‘make’. Caso tudo dê certo o programa estará pronto para ser usado.
   
 ### Utilização
 Para utilizar o software de controle do sistema de arquivos basta executar o arquivo “m2g”. As diretivas que acompanham o comando de execução definem a ação a ser executada. 
@@ -28,13 +28,11 @@ Exibe uma listagem das diretivas validas no sistema de arquivos.
 
 ##### FORMATAÇÃO DE DISCO
 `./m2g [-f || --format] [caminhoDisco]`  
-  
 Esta ação formata o disco selecionado com a estrutura padrão M2G, depois de executada o programa irá perguntar se o usuario deseja fazer uma formatação completa do disco ou apenas uma formatação rápida, a formatação completa irá percorrer todo o disco, apagando as informações escritas sobrescrevendo zeros em todos os bytes, já a formatação rápida vai apenas apagar o inicio do disco onde será escrito o bloco de controle (superblock).
 
 
 ##### IMPORTAR ARQUIVOS PARA UM DISCO
-`./m2g [-i || --import] [caminhoParaArquivoSerCopiado] [caminhoDisco] [CaminhoPastaDestinoDentroDoDisco]`  
-    
+`./m2g [-i || --import] [caminhoParaArquivoSerCopiado] [caminhoDisco] [CaminhoPastaDestinoDentroDoDisco]`     
 Esta ação irá copiar um arquivo qualquer que esteja em outra unidade de armazenamento para dentro do disco, para realizar esta ação é preciso que o disco de destino já tenha sido formatado no padrão M2G.  
 **OBS**: Caso o último campo fique em branco o arquivo será copiado para o diretorio raiz do disco de destino.
   

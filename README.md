@@ -16,8 +16,7 @@ Para compilar o software gestor do sistema de arquivos basta clonar este reposit
 Para utilizar o software de controle do sistema de arquivos basta executar o arquivo “m2g”. As diretivas que acompanham o comando de execução definem a ação a ser executada. 
   
 ### Diretivas
-Para executar as diferentes funcionalidades do software gestor do sistema de arquivos é preciso incluir diretivas no comando de execução, cada diretiva se relaciona a uma ação. Por exemplo:
-
+Para executar as diferentes funcionalidades do software gestor do sistema de arquivos é preciso incluir diretivas no comando de execução, cada diretiva se relaciona a uma ação. Por exemplo:  
 `./m2g --diretivaAcao1 `
 
 As ações validas são:

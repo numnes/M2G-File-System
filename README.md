@@ -8,14 +8,19 @@
 
 Sistema de arquivos desenvolvido na disciplina de Sistemas Operacionais. Utiliza uma abordagem semelhante ao sistema EXT2, porém com uma estrutura mais simples, dividindo o disco em apenas um setor e omitindo alguns campos no superblock.
 
-
-### Compilar
-Para compilar o software gestor do sistema de arquivos basta clonar este repositorio, acessar o diretorio do programa e executar o comando ‘make’. Caso tudo dê certo o programa estará pronto para ser usado.
+# Utilização
+A utilização do sistema de arquivos é feita atravéz deste software de gestão de disco, para utilizar o software basta clonar este repositório e compilar o programa. O repositório contém um arquivo *Makefile*, este é um arquivo usado pelo utilitario *make* para automatizar o processo de compilação (para saber mais acesse este [tutorial sobre makefiles](https://www.embarcados.com.br/introducao-ao-makefile/) ). Para compilar usando o comando *make* é preciso ter o *make* já instalado em sua máquina, caso ele já esteja instalado basta executar os comandos abaixo para utilizar o M2G File System.
+``` 
+git clone https://github.com/matheusnunesismael/M2G-File-System.git
+cd M2G-File-System/
+make
+```
+Se tudo der certo e o comando make não retornar nenhum erro o programa vai estar pronto pra ser usado :blush:  
   
-### Utilização
-Para utilizar o software de controle do sistema de arquivos basta executar o arquivo “m2g”. As diretivas que acompanham o comando de execução definem a ação a ser executada. 
+Para utilizar o software de controle do sistema de arquivos basta executar o arquivo “m2g”, desse jeito:  
+`./m2g`
   
-### Diretivas
+# Diretivas
 Para executar as diferentes funcionalidades do software gestor do sistema de arquivos é preciso incluir diretivas no comando de execução, cada diretiva se relaciona a uma ação. Por exemplo:  
 `./m2g --diretivaAcao1 `
 

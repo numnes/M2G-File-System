@@ -1,14 +1,14 @@
 #include <stdio.h>
 
 #include <bits/stdc++.h>
-#include "structures.h"
-#include "utils.h"
-#include "format_controller.h"
-#include "reader.h"
-#include "reader_controller.h"
-#include "writer_controller.h"
-#include "view_mode.h"
-#include "prints.h"
+#include "src/structures.h"
+#include "src/utils.h"
+#include "src/format_controller.h"
+#include "src/reader.h"
+#include "src/reader_controller.h"
+#include "src/writer_controller.h"
+#include "src/view_mode.h"
+#include "src/prints.h"
 
 int main(int argc, const char **argv){
     const char *device_name;

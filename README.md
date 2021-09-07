@@ -8,7 +8,7 @@
 
 Sistema de arquivos desenvolvido na disciplina de Sistemas Operacionais. Utiliza uma abordagem semelhante ao sistema EXT2, porém com uma estrutura mais simples, dividindo o disco em apenas um setor e omitindo alguns campos no superblock.
 
-# Utilização
+## Utilização
 A utilização do sistema de arquivos é feita atravéz do software de gestão de disco neste repositório, para utilizar o software basta clonar-lo e compilar o programa. O repositório contém um arquivo *Makefile*, este é um arquivo usado pelo utilitario *make* para automatizar o processo de compilação (para saber mais acesse [este tutorial](https://www.embarcados.com.br/introducao-ao-makefile/) do funcionamento destes arquivos ). Para compilar usando o comando *make* é preciso ter o *make* já instalado em sua máquina, para verificar a instalação digite no terminal:
 
 `make --version`
@@ -25,7 +25,7 @@ Para utilizar o software de controle do sistema de arquivos basta executar o arq
 
 `./m2g`
   
-# Diretivas
+## Diretivas
 Para executar as diferentes funcionalidades do software gestor do sistema de arquivos é preciso incluir diretivas no comando de execução, cada diretiva se relaciona a uma ação. Por exemplo:  
 
 `./m2g --diretivaAcao1 `
@@ -62,3 +62,40 @@ Este comando irá criar um diretório logico dentro do disco formatado, os diret
 `./m2g [-v || --view] [caminhoDisco]`  
 O modo de visualização permite navegar pelo disco selecionado, que esteja no padrão M2G, para entrar em um diretorio basta usar o comando cd:   
 `m2g> cd minha pasta`
+
+## Desenvolvido por:
+<table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/matheusnunesismael">
+          <img src="https://avatars.githubusercontent.com/u/32654785?v=4?s=100" width="100px;" alt="" />
+          <br />
+          <sub>
+            <b>Matheus Nunes</b>
+          </sub>
+        </a>
+        <br />
+        <a href="https://github.com/matheusnunesismael/M2G-File-System/commits?author=matheusnunesismael"
+          title="Ideas & Planning">🤔</a>
+        <a href="https://github.com/matheusnunesismael/M2G-File-System/commits?author=matheusnunesismael"
+          title="Documentation">📖</a>
+        <a href="https://github.com/matheusnunesismael/M2G-File-System/commits?author=matheusnunesismael"
+          title="Code">💻</a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/mateusedival">
+          <img src="https://avatars.githubusercontent.com/u/28989384?v=4?s=100" width="100px;" alt="" />
+          <br />
+          <sub>
+            <b>Mateus Edival</b>
+          </sub>
+        </a>
+        <br />
+        <a href="https://github.com/matheusnunesismael/M2G-File-System/commits?author=mateusedival"
+          title="Ideas & Planning">🤔</a>
+        <a href="https://github.com/matheusnunesismael/M2G-File-System/commits?author=mateusedival"
+          title="Documentation">📖</a>
+        <a href="https://github.com/matheusnunesismael/M2G-File-System/commits?author=mateusedival" title="Code">💻</a>
+      </td>
+    </tr>
+  </table>
